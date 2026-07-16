@@ -48,6 +48,9 @@ var COLUNAS = {
   // QUIRK confirmado por engenharia reversa: o "tipo de resolução" que o painel
   // usa vem da coluna "Solução". A coluna "Tipo de resolução" tende a ficar vazia.
   tipoResolucao: ['solucao', 'tipo de resolucao'],
+  // Coluna NOVA (adicione um cabeçalho "Status" na planilha para ativar o workflow de status).
+  // Sem essa coluna, o painel deriva o status de "Auditoria realizada?" automaticamente.
+  status:        ['status'],
 };
 
 /* ============================ HELPERS ============================ */
@@ -168,6 +171,7 @@ function doGet() {
         tipoProduto:   String(get(row, 'tipoProduto') || '').trim(),
         queFim:        String(get(row, 'queFim') || '').trim(),
         tipoResolucao: String(get(row, 'tipoResolucao') || '').trim(),
+        status:        String(get(row, 'status') || '').trim(),
         linkPedido:    extractUrl_(descricao),
       });
     }
@@ -186,6 +190,7 @@ function doPost(e) {
 
     if (action === 'criar') return criarCaso_(body.fields || {});
     if (action === 'audit') return auditarCaso_(body.rowIndex, body.fields || {});
+    if (action === 'setStatus') return setStatus_(body.rowIndex, body.status);
 
     return jsonOut_({ ok: false, error: 'Ação desconhecida: ' + action });
   } catch (err) {
@@ -214,6 +219,7 @@ function criarCaso_(f) {
   setCell_(sh, novaLinha, col, 'data', fmtDate_(hoje));
 
   setCell_(sh, novaLinha, col, 'auditoria',     f.auditoria ? 'TRUE' : 'FALSE');
+  setCell_(sh, novaLinha, col, 'status',        f.status || (f.auditoria ? 'resolvido' : 'novo'));
   setCell_(sh, novaLinha, col, 'idVenda',       f.idVenda);
   setCell_(sh, novaLinha, col, 'nomeCard',      f.nomeCard);
   setCell_(sh, novaLinha, col, 'descricao',     montarDescricao_(f));
@@ -249,6 +255,7 @@ function auditarCaso_(rowIndex, f) {
   var col = buildColMap_(header);
 
   setCell_(sh, rowIndex, col, 'auditoria',     'TRUE');
+  setCell_(sh, rowIndex, col, 'status',        f.status || 'resolvido');
   setCell_(sh, rowIndex, col, 'culpaDe',       f.culpaDe);
   setCell_(sh, rowIndex, col, 'setor',         f.setor);
   setCell_(sh, rowIndex, col, 'responsavel',   f.responsavel);
@@ -262,6 +269,40 @@ function auditarCaso_(rowIndex, f) {
   setCell_(sh, rowIndex, col, 'tipoResolucao', f.tipoResolucao);
 
   return jsonOut_({ ok: true, rowIndex: rowIndex });
+}
+
+/** action:setStatus — muda o status de workflow de uma linha (e sincroniza a auditoria). */
+function setStatus_(rowIndex, status) {
+  if (!rowIndex || !status) return jsonOut_({ ok: false, error: 'rowIndex/status ausente' });
+  var sh = getSheet_();
+  var col = buildColMap_(sh.getDataRange().getValues()[0]);
+  if (col.status == null) return jsonOut_({ ok: false, error: 'Coluna "Status" não existe na planilha. Adicione um cabeçalho "Status".' });
+  setCell_(sh, rowIndex, col, 'status', status);
+  // "Resolvido" conta como auditado; os demais estados, não.
+  setCell_(sh, rowIndex, col, 'auditoria', status === 'resolvido' ? 'TRUE' : 'FALSE');
+  return jsonOut_({ ok: true, rowIndex: rowIndex, status: status });
+}
+
+/**
+ * MIGRAÇÃO (rode UMA vez no editor após criar a coluna "Status"): preenche o status
+ * das linhas antigas a partir de "Auditoria realizada?" — auditado→resolvido, senão→novo.
+ * Não sobrescreve linhas que já tenham status.
+ */
+function migrarStatus() {
+  var sh = getSheet_();
+  var values = sh.getDataRange().getValues();
+  var col = buildColMap_(values[0]);
+  if (col.status == null) { Logger.log('Crie a coluna "Status" antes de migrar.'); return; }
+  var n = 0;
+  for (var r = 1; r < values.length; r++) {
+    var atual = String(values[r][col.status] || '').trim();
+    var idv = String(values[r][col.idVenda] || '').trim();
+    if (atual !== '' || idv === '') continue; // já tem status ou linha vazia
+    var status = parseBool_(values[r][col.auditoria]) ? 'resolvido' : 'novo';
+    sh.getRange(r + 1, col.status + 1).setValue(status);
+    n++;
+  }
+  Logger.log('Migração concluída: ' + n + ' linha(s) preenchida(s).');
 }
 
 /* ============================ DIAGNÓSTICO ============================ */

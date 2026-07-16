@@ -215,6 +215,12 @@
   .sel-bar .sel-n{font-size:13px;font-weight:700;margin-right:5px;white-space:nowrap}
   .sel-bar .btn{background:rgba(255,255,255,.13);color:#fff;border:0;padding:7px 13px}
   .sel-bar .btn:hover{background:rgba(255,255,255,.24)}
+  /* Status (badge + controle segmentado) */
+  .stbadge{font-weight:700}
+  .status-seg{display:flex;flex-wrap:wrap;gap:6px}
+  .stbtn{border:1px solid #E6E8EC;background:#fff;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;color:#6B7280;cursor:pointer;font-family:inherit}
+  .stbtn:hover{border-color:var(--c);color:var(--c)}
+  .stbtn.on{background:var(--c);border-color:var(--c);color:#fff}
   .close-btn{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E8E9EC;background:#fff;color:#565C64;font-size:15px;cursor:pointer}
   .close-btn:hover{background:#F7F8FA}
   .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#16181D;margin-bottom:12px;display:flex;align-items:center;gap:9px}
@@ -445,6 +451,7 @@ async function loadRealData(){
     custo: row.custo,
     tipoResolucao: row.tipoResolucao || null,
     queFim: row.queFim || null,
+    status: row.status || null, // preenchido quando a coluna "Status" existir; senão derivado
   }));
   return rows;
 }
@@ -1027,6 +1034,31 @@ function renderResp(main, data){
   });
 }
 
+/* ================= STATUS (modelo de workflow) ================= */
+const STATUS_DEF = [
+  {key:'novo',         label:'Novo',         cor:'#3B82F6'},
+  {key:'em_auditoria', label:'Em auditoria', cor:'#8B5CF6'},
+  {key:'aguardando',   label:'Aguardando',   cor:'#E0A400'},
+  {key:'resolvido',    label:'Resolvido',    cor:'#15A15A'},
+  {key:'reincidente',  label:'Reincidente',  cor:'#C63A32'},
+];
+const STATUS_MAP = Object.fromEntries(STATUS_DEF.map((s,i)=>[s.key, {...s, ordem:i}]));
+// Status efetivo: usa a coluna "status" se existir; senão deriva do campo auditado.
+function effectiveStatus(r){ return (r.status && STATUS_MAP[r.status]) ? r.status : (r.auditado ? 'resolvido' : 'novo'); }
+function statusBadge(r){ const s=STATUS_MAP[effectiveStatus(r)]; return `<span class="badge stbadge" style="background:${s.cor}1A;color:${s.cor}">${s.label}</span>`; }
+function setCaseStatus(r, key){
+  if(!STATUS_MAP[key] || effectiveStatus(r)===key) return;
+  r.status = key;
+  r.auditado = (key==='resolvido'); // mantém as análises coerentes: só "Resolvido" conta como auditado
+  if(!USING_DEMO){
+    fetch(CONFIG.API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'setStatus', rowIndex:r.id, status:key }) }).catch(()=>{});
+  }
+  derivarListasDinamicas(); initFilterOptions();
+  render(); if(CASO_ATUAL===r.id) renderDrawer(r.id);
+  toast('Status: ' + STATUS_MAP[key].label, true);
+}
+
 /* ================= CASOS / AUDITORIA ================= */
 function diasDesde(date){ return date ? Math.max(0, Math.floor((Date.now()-date.getTime())/86400000)) : 0; }
 function ageBadge(r){
@@ -1051,7 +1083,7 @@ function sortCasos(rows){
     case 'setor': return (r.setor||'').toLowerCase();
     case 'resp': return (r.responsavel||'').toLowerCase();
     case 'custo': return (r.custo==null) ? -Infinity : r.custo;
-    case 'status': return r.auditado ? 1 : 0;
+    case 'status': return STATUS_MAP[effectiveStatus(r)].ordem;
     default: return 0;
   } };
   return rows.sort((a,b)=>{ const va=val(a), vb=val(b); if(va<vb) return -dir; if(va>vb) return dir; return b.date-a.date; });
@@ -1104,7 +1136,7 @@ function renderCasos(main, all){
             <td>${r.setor ? `<span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:7px"></span>${r.setor}` : '<span style="color:#B9BEC6">—</span>'}</td>
             <td>${r.responsavel || '<span style="color:#B9BEC6">—</span>'}</td>
             <td class="num">${r.custo!==null && r.custo!==undefined ? brl(r.custo) : '<span style="color:#B9BEC6">—</span>'}</td>
-            <td>${r.auditado ? '<span class="badge pill-green">Auditado</span>' : '<span class="badge pill-red">Pendente</span>'}</td>
+            <td>${statusBadge(r)}</td>
           </tr>`).join('')}</tbody>
       </table></div>
       ${rows.length===0 ? '<div class="empty"><div class="e-title">Nenhum caso encontrado</div><div class="e-sub">Ajuste a busca ou os filtros do período.</div></div>' : ''}
@@ -1299,7 +1331,7 @@ function drawerInnerHTML(r){
         <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nomeCard}</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
           <span class="idchip" id="idCopy" data-copy="${r.idVenda}">#${r.idVenda}</span>
-          <span class="badge ${r.auditado?'pill-green':'pill-red'}">${r.auditado?'Auditado':'Pendente de auditoria'}</span>
+          ${statusBadge(r)}
           ${!USING_DEMO ? `<span class="badge pill-grey">linha ${r.id} na planilha</span>` : ''}
           ${r.linkPedido ? `<a href="${r.linkPedido}" target="_blank" class="badge" style="background:#EEF0F3;color:#565C64;text-decoration:none">Abrir pedido ↗</a>` : ''}
         </div>
@@ -1307,6 +1339,8 @@ function drawerInnerHTML(r){
       <button class="close-btn" id="drwClose">✕</button>
     </div>
     <div class="drawer-body">
+      <div class="sec-title">Status do caso</div>
+      <div class="status-seg" style="margin-bottom:18px">${STATUS_DEF.map(sd=>`<button class="stbtn ${effectiveStatus(r)===sd.key?'on':''}" data-status="${sd.key}" style="--c:${sd.cor}">${sd.label}</button>`).join('')}</div>
       <div class="sec-title">Dados do registro</div>
       <div class="field-grid" style="margin-bottom:16px">
         <div class="field"><label>Data de registro</label><div class="readonly-block">${fmtDate(r.date)}</div></div>
@@ -1381,6 +1415,7 @@ function wireDrawer(r){
   const prev = $('drwPrev'), next = $('drwNext');
   if(prev) prev.addEventListener('click', ()=>{ if(prev.dataset.target) openCaso(Number(prev.dataset.target)); });
   if(next) next.addEventListener('click', ()=>{ if(next.dataset.target) openCaso(Number(next.dataset.target)); });
+  document.querySelectorAll('.drawer .stbtn').forEach(b=>b.addEventListener('click', ()=> setCaseStatus(r, b.dataset.status)));
 
   if(editable){
     const selRes = $('selResolucao');
@@ -1408,7 +1443,7 @@ function wireDrawer(r){
         }
         Object.assign(r, { setor:fields.setor, culpaDe:fields.culpaDe, responsavel:fields.responsavel, empresa:fields.empresa,
           tipoProduto:fields.tipoProduto, subproblema:fields.tipoProblema, qtd:fields.qtd, custo:fields.custo,
-          queFim:fields.queFim, tipoResolucao:fields.tipoResolucao, auditado:true });
+          queFim:fields.queFim, tipoResolucao:fields.tipoResolucao, auditado:true, status:'resolvido' });
         derivarListasDinamicas(); initFilterOptions();
         closeDrawer(false); render();
         toast('Auditoria salva', true);
@@ -1447,7 +1482,7 @@ function renderPalette(q){
     <span class="pid">#${r.idVenda}</span>
     <span class="pname">${r.nomeCard||'(sem nome)'}</span>
     <span class="pmeta">${r.empresa||'—'} · ${r.setor||'s/ setor'}</span>
-    <span class="badge ${r.auditado?'pill-green':'pill-red'}" style="font-size:10px">${r.auditado?'Auditado':'Pendente'}</span>
+    ${statusBadge(r)}
   </div>`).join('');
   listEl.querySelectorAll('.pal-item').forEach(it=>{
     it.addEventListener('click', ()=>palOpen(Number(it.dataset.idx)));

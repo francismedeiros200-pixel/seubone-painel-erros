@@ -58,6 +58,22 @@ ponte entre a planilha e o painel.
 Abra a URL `/exec` no navegador. Deve aparecer algo como
 `{"ok":true,"rows":[ ... ]}`. Compare com o backup antigo se tiver dúvida.
 
+### 1a) Ativar o workflow de STATUS (opcional, mas recomendado)
+O painel trabalha com 5 status: **Novo · Em auditoria · Aguardando · Resolvido ·
+Reincidente**. Sem configurar nada, ele **deriva** o status (auditado → Resolvido,
+pendente → Novo) e você já vê os badges — mas mudanças de status só ficam salvas
+na sessão. Para **persistir** as mudanças na planilha:
+
+1. Na planilha, adicione uma coluna nova com o cabeçalho exatamente **`Status`**
+   (pode ser a última coluna).
+2. Publique o `Codigo.gs` deste repositório (passos acima) — ele já traz a ação
+   `setStatus` e o mapeamento da coluna.
+3. **Uma vez**, no editor do Apps Script, selecione a função **`migrarStatus`** e
+   clique em **▶ Executar**. Ela preenche o status das linhas antigas a partir de
+   "Auditoria realizada?" (não sobrescreve o que já tiver status).
+
+Pronto: a partir daí, mudar o status pelo painel grava na coluna `Status`.
+
 ---
 
 ## 2) Publicar o painel no GitHub Pages (link fixo para a equipe)
