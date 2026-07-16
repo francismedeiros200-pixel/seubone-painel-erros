@@ -149,10 +149,56 @@ function jsonOut_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/* ============================ HISTÓRICO ============================ */
+
+var HIST_SHEET_NAME = 'Historico';
+
+/** Aba de histórico (cria com cabeçalho se não existir). */
+function getHistSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(HIST_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(HIST_SHEET_NAME);
+    sh.appendRow(['Data/Hora', 'ID do caso', 'ID venda', 'Usuário', 'Ação', 'Detalhe']);
+  }
+  return sh;
+}
+
+/** Registra um evento no histórico. Nunca deixa um erro aqui quebrar a operação principal. */
+function logHist_(caseRow, idVenda, usuario, acao, detalhe) {
+  try {
+    getHistSheet_().appendRow([new Date(), caseRow, idVenda || '', usuario || '—', acao || '', detalhe || '']);
+  } catch (e) { /* silencioso */ }
+}
+
+/** Retorna os eventos de histórico de um caso (mais recentes primeiro). */
+function histFor_(rowIndex) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(HIST_SHEET_NAME);
+  if (!sh) return [];
+  var values = sh.getDataRange().getValues();
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][1]) !== String(rowIndex)) continue;
+    var dt = values[r][0];
+    out.push({
+      quando: (dt instanceof Date) ? Utilities.formatDate(dt, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm') : String(dt),
+      usuario: String(values[r][3] || '—'),
+      acao: String(values[r][4] || ''),
+      detalhe: String(values[r][5] || ''),
+    });
+  }
+  return out.reverse();
+}
+
 /* ============================ LEITURA (GET) ============================ */
 
-function doGet() {
+function doGet(e) {
   try {
+    // GET de histórico: ?action=historico&rowIndex=123
+    if (e && e.parameter && e.parameter.action === 'historico') {
+      return jsonOut_({ ok: true, eventos: histFor_(e.parameter.rowIndex) });
+    }
     var sh = getSheet_();
     var values = sh.getDataRange().getValues();
     if (values.length < 2) return jsonOut_({ ok: true, rows: [] });
@@ -196,7 +242,7 @@ function doGet() {
         linkPedido:    extractUrl_(descricao),
       });
     }
-    return jsonOut_({ ok: true, version: 'status-2026-07', aba: sh.getName(), rows: rows });
+    return jsonOut_({ ok: true, version: 'hist-2026-07', aba: sh.getName(), rows: rows });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err && err.message || err) });
   }
@@ -209,9 +255,9 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     var action = body.action;
 
-    if (action === 'criar') return criarCaso_(body.fields || {});
-    if (action === 'audit') return auditarCaso_(body.rowIndex, body.fields || {});
-    if (action === 'setStatus') return setStatus_(body.rowIndex, body.status);
+    if (action === 'criar') return criarCaso_(body.fields || {}, body.usuario);
+    if (action === 'audit') return auditarCaso_(body.rowIndex, body.fields || {}, body.usuario);
+    if (action === 'setStatus') return setStatus_(body.rowIndex, body.status, body.usuario);
 
     return jsonOut_({ ok: false, error: 'Ação desconhecida: ' + action });
   } catch (err) {
@@ -228,7 +274,7 @@ function setCell_(sh, rowIndex1, col, key, value) {
 }
 
 /** action:criar — adiciona uma nova linha de erro no fim da planilha. */
-function criarCaso_(f) {
+function criarCaso_(f, usuario) {
   var sh = getSheet_();
   var header = sh.getDataRange().getValues()[0];
   var col = buildColMap_(header);
@@ -257,6 +303,9 @@ function criarCaso_(f) {
   setCell_(sh, novaLinha, col, 'queFim',        f.queFim);
   setCell_(sh, novaLinha, col, 'tipoResolucao', f.tipoResolucao);
 
+  logHist_(novaLinha, f.idVenda, usuario || f.quemCadastrou, 'Caso registrado',
+    f.auditoria ? 'já auditado (' + (f.status || 'resolvido') + ')' : 'pendente de auditoria');
+
   return jsonOut_({ ok: true, rowIndex: novaLinha });
 }
 
@@ -269,7 +318,7 @@ function montarDescricao_(f) {
 }
 
 /** action:audit — atualiza os campos de auditoria de uma linha existente. */
-function auditarCaso_(rowIndex, f) {
+function auditarCaso_(rowIndex, f, usuario) {
   if (!rowIndex) return jsonOut_({ ok: false, error: 'rowIndex ausente' });
   var sh = getSheet_();
   var header = sh.getDataRange().getValues()[0];
@@ -289,18 +338,23 @@ function auditarCaso_(rowIndex, f) {
   setCell_(sh, rowIndex, col, 'queFim',        f.queFim);
   setCell_(sh, rowIndex, col, 'tipoResolucao', f.tipoResolucao);
 
+  logHist_(rowIndex, f.idVenda, usuario, 'Auditoria salva',
+    [f.setor, f.tipoResolucao, (f.custo ? 'R$ ' + f.custo : '')].filter(String).join(' · '));
+
   return jsonOut_({ ok: true, rowIndex: rowIndex });
 }
 
 /** action:setStatus — muda o status de workflow de uma linha (e sincroniza a auditoria). */
-function setStatus_(rowIndex, status) {
+function setStatus_(rowIndex, status, usuario) {
   if (!rowIndex || !status) return jsonOut_({ ok: false, error: 'rowIndex/status ausente' });
   var sh = getSheet_();
   var col = buildColMap_(sh.getDataRange().getValues()[0]);
   if (col.status == null) return jsonOut_({ ok: false, error: 'Coluna "Status" não existe na planilha. Adicione um cabeçalho "Status".' });
+  var idVenda = (col.idVenda != null) ? sh.getRange(rowIndex, col.idVenda + 1).getValue() : '';
   setCell_(sh, rowIndex, col, 'status', status);
   // "Resolvido" conta como auditado; os demais estados, não.
   setCell_(sh, rowIndex, col, 'auditoria', status === 'resolvido' ? 'TRUE' : 'FALSE');
+  logHist_(rowIndex, idVenda, usuario, 'Status alterado', '→ ' + status);
   return jsonOut_({ ok: true, rowIndex: rowIndex, status: status });
 }
 
