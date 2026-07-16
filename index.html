@@ -221,6 +221,27 @@
   .stbtn{border:1px solid #E6E8EC;background:#fff;border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;color:#6B7280;cursor:pointer;font-family:inherit}
   .stbtn:hover{border-color:var(--c);color:var(--c)}
   .stbtn.on{background:var(--c);border-color:var(--c);color:#fff}
+  /* Toggle Lista/Kanban */
+  .seg-toggle{display:inline-flex;border:1px solid #E6E8EC;border-radius:8px;overflow:hidden;flex:0 0 auto}
+  .seg-toggle .seg{border:0;background:#fff;padding:7px 13px;font-size:12.5px;font-weight:600;color:#6B7280;cursor:pointer;font-family:inherit}
+  .seg-toggle .seg:hover{background:#FAFBFC}
+  .seg-toggle .seg.on{background:#17181B;color:#fff}
+  /* Kanban */
+  .kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+  .kcol{flex:0 0 264px;background:#F5F6F8;border:1px solid #E6E8EC;border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 300px)}
+  .kcol-head{padding:11px 13px;font-size:12.5px;font-weight:700;color:#17181B;display:flex;align-items:center;gap:8px;border-bottom:1px solid #E6E8EC}
+  .kcol-head .kc-count{margin-left:auto;background:#E6E8EC;color:#3A3F47;border-radius:999px;padding:1px 9px;font-size:11px}
+  .kcol-body{padding:9px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;flex:1;min-height:80px}
+  .kcol.drag-over{outline:2px dashed var(--kc);outline-offset:-4px;background:#EDEFF2}
+  .kcol-empty{color:#B9BEC6;font-size:12px;text-align:center;padding:18px 8px;border:1px dashed #D8DBE0;border-radius:8px}
+  .kcard{background:#fff;border:1px solid #E6E8EC;border-radius:9px;padding:10px 11px;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .kcard:hover{border-color:#D0D4DA}
+  .kcard:active{cursor:grabbing}
+  .kcard.dragging{opacity:.45}
+  .kcard .kc-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .kcard .kc-id{font-weight:700;font-size:11.5px;color:#565C64}
+  .kcard .kc-name{font-weight:600;font-size:13px;margin:3px 0 7px;line-height:1.32}
+  .kcard .kc-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:#8A9099;align-items:center}
   .close-btn{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E8E9EC;background:#fff;color:#565C64;font-size:15px;cursor:pointer}
   .close-btn:hover{background:#F7F8FA}
   .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#16181D;margin-bottom:12px;display:flex;align-items:center;gap:9px}
@@ -523,16 +544,18 @@ let charts = {};
 let CASO_ATUAL = null; // id do caso aberto no drawer lateral (null = fechado)
 state.casosSort = { key:'', dir:'desc' }; // ordenação da tabela de casos ('' = padrão: pendentes primeiro)
 state.casosView = 'todos'; // filtro rápido da tela de casos: todos | pendentes | parados7 | altoCusto
+state.casosLayout = 'lista'; // layout da tela de casos: lista | kanban
 
 /* ---------- Persistência da visão (localStorage) ---------- */
 const LS_STATE = 'seubone_erros_state_v1';
 const LS_VIEWS = 'seubone_erros_views_v1';
-function persistState(){ try{ localStorage.setItem(LS_STATE, JSON.stringify({ screen:state.screen, setor:state.setor, empresa:state.empresa, casosView:state.casosView, casosSort:state.casosSort })); }catch(e){} }
+function persistState(){ try{ localStorage.setItem(LS_STATE, JSON.stringify({ screen:state.screen, setor:state.setor, empresa:state.empresa, casosView:state.casosView, casosSort:state.casosSort, casosLayout:state.casosLayout })); }catch(e){} }
 function restoreState(){ try{ const s=JSON.parse(localStorage.getItem(LS_STATE)||'{}');
   if(s.screen) state.screen=s.screen;
   if(s.setor!=null) state.setor=s.setor;
   if(s.empresa!=null) state.empresa=s.empresa;
   if(s.casosView) state.casosView=s.casosView;
+  if(s.casosLayout) state.casosLayout=s.casosLayout;
   if(s.casosSort && s.casosSort.key!==undefined) state.casosSort=s.casosSort;
 }catch(e){} }
 function getViews(){ try{ return JSON.parse(localStorage.getItem(LS_VIEWS)||'[]'); }catch(e){ return []; } }
@@ -1089,6 +1112,43 @@ function sortCasos(rows){
   return rows.sort((a,b)=>{ const va=val(a), vb=val(b); if(va<vb) return -dir; if(va>vb) return dir; return b.date-a.date; });
 }
 
+/* ---------- Kanban (pipeline por status) ---------- */
+function kcard(r){
+  return `<div class="kcard" draggable="true" data-id="${r.id}">
+    <div class="kc-top"><span class="kc-id">#${r.idVenda}</span>${!r.auditado?ageBadge(r):''}</div>
+    <div class="kc-name">${r.nomeCard}</div>
+    <div class="kc-meta">
+      ${r.setor ? `<span><span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:4px"></span>${r.setor}</span>` : ''}
+      ${r.empresa ? `<span>${r.empresa}</span>` : ''}
+      ${r.responsavel ? `<span>${r.responsavel}</span>` : ''}
+    </div>
+  </div>`;
+}
+function kanbanHTML(rows){
+  return `<div class="kanban">` + STATUS_DEF.map(sd=>{
+    const cards = rows.filter(r=>effectiveStatus(r)===sd.key);
+    return `<div class="kcol" data-status="${sd.key}" style="--kc:${sd.cor}">
+      <div class="kcol-head"><span class="dot" style="background:${sd.cor}"></span>${sd.label}<span class="kc-count">${cards.length}</span></div>
+      <div class="kcol-body">${cards.map(kcard).join('') || '<div class="kcol-empty">Arraste casos para cá</div>'}</div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+function wireKanban(){
+  document.querySelectorAll('.kcard').forEach(card=>{
+    card.addEventListener('click', ()=> openCaso(Number(card.dataset.id)));
+    card.addEventListener('dragstart', e=>{ card.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', card.dataset.id); });
+    card.addEventListener('dragend', ()=>{ card.classList.remove('dragging'); document.querySelectorAll('.kcol.drag-over').forEach(c=>c.classList.remove('drag-over')); });
+  });
+  document.querySelectorAll('.kcol').forEach(col=>{
+    col.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', e=>{ if(!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
+    col.addEventListener('drop', e=>{ e.preventDefault(); col.classList.remove('drag-over');
+      const id=Number(e.dataTransfer.getData('text/plain')); const st=col.dataset.status;
+      const r=RECORDS.find(x=>x.id===id); if(r && st) setCaseStatus(r, st);
+    });
+  });
+}
+
 function renderCasos(main, all){
   const q = state.buscaCaso.trim().toLowerCase();
   let rows = all.slice();
@@ -1109,22 +1169,11 @@ function renderCasos(main, all){
 
   const views = getViews();
   const vChip = (k,label)=>`<button class="chip ${state.casosView===k?'on':''}" data-view="${k}">${label}</button>`;
+  const layout = state.casosLayout==='kanban' ? 'kanban' : 'lista';
 
-  main.innerHTML = `
-    <div class="casos-kpis">
-      <div class="ck"><div class="ck-l">Pendentes de auditoria</div><div class="ck-v">${pend.length}</div></div>
-      <div class="ck ${parados7>0?'warn':''}"><div class="ck-l">Parados há +7 dias</div><div class="ck-v">${parados7}</div></div>
-      <div class="ck"><div class="ck-l">Idade média dos pendentes</div><div class="ck-v">${idadeMedia}<span style="font-size:13px;font-weight:600;color:#8A9099"> dias</span></div></div>
-    </div>
-    <div class="chips-bar">
-      ${vChip('todos','Todos')}${vChip('pendentes','Pendentes')}${vChip('parados7','Parados +7d')}${vChip('altoCusto','Alto custo')}
-      ${views.length?'<span class="chip-sep"></span>':''}
-      ${views.map((v,i)=>`<button class="chip" data-savedidx="${i}" title="setor: ${v.setor||'todos'} · linha: ${v.empresa||'todas'} · ${v.casosView||'todos'}">${v.nome} <span class="x" data-delidx="${i}">✕</span></button>`).join('')}
-      <button class="chip chip-add" id="chipSalvar">+ Salvar visão atual</button>
-    </div>
+  const listCard = `
     <div class="card">
-      <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.</div></div>
-        <input class="searchbar" id="buscaCaso" placeholder="Buscar por ID do pedido, cliente ou consultor…" value="${state.buscaCaso}"></div>
+      <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.</div></div></div>
       <div class="tbl-wrap"><table>
         <thead><tr><th class="chkcell"><input type="checkbox" id="chkAll"></th>${th('id','ID')}${th('nome','Cliente / Card')}${th('data','Data')}${th('idade','Idade')}${th('setor','Setor')}${th('resp','Responsável')}${th('custo','Custo',true)}${th('status','Status')}</tr></thead>
         <tbody>${rows.map(r=>`<tr class="clickable${SEL.has(r.id)?' sel-row':''}" data-id="${r.id}">
@@ -1140,13 +1189,37 @@ function renderCasos(main, all){
           </tr>`).join('')}</tbody>
       </table></div>
       ${rows.length===0 ? '<div class="empty"><div class="e-title">Nenhum caso encontrado</div><div class="e-sub">Ajuste a busca ou os filtros do período.</div></div>' : ''}
+    </div>`;
+
+  main.innerHTML = `
+    <div class="casos-kpis">
+      <div class="ck"><div class="ck-l">Pendentes de auditoria</div><div class="ck-v">${pend.length}</div></div>
+      <div class="ck ${parados7>0?'warn':''}"><div class="ck-l">Parados há +7 dias</div><div class="ck-v">${parados7}</div></div>
+      <div class="ck"><div class="ck-l">Idade média dos pendentes</div><div class="ck-v">${idadeMedia}<span style="font-size:13px;font-weight:600;color:#8A9099"> dias</span></div></div>
     </div>
+    <div class="chips-bar">
+      ${vChip('todos','Todos')}${vChip('pendentes','Pendentes')}${vChip('parados7','Parados +7d')}${vChip('altoCusto','Alto custo')}
+      ${views.length?'<span class="chip-sep"></span>':''}
+      ${views.map((v,i)=>`<button class="chip" data-savedidx="${i}" title="setor: ${v.setor||'todos'} · linha: ${v.empresa||'todas'} · ${v.casosView||'todos'}">${v.nome} <span class="x" data-delidx="${i}">✕</span></button>`).join('')}
+      <button class="chip chip-add" id="chipSalvar">+ Salvar visão atual</button>
+      <span style="flex:1"></span>
+      <input class="searchbar" id="buscaCaso" placeholder="Buscar ID, cliente ou consultor…" value="${state.buscaCaso}" style="max-width:260px">
+      <div class="seg-toggle">
+        <button class="seg ${layout==='lista'?'on':''}" data-layout="lista">☰ Lista</button>
+        <button class="seg ${layout==='kanban'?'on':''}" data-layout="kanban">▦ Kanban</button>
+      </div>
+    </div>
+    ${layout==='kanban' ? kanbanHTML(rows) : listCard}
   `;
 
   document.getElementById('buscaCaso').addEventListener('input', e=>{ const v=e.target.value; state.buscaCaso=v; render(); const el=document.getElementById('buscaCaso'); el.focus(); el.setSelectionRange(v.length,v.length); });
   document.querySelectorAll('.chip[data-view]').forEach(c=>c.addEventListener('click', ()=>{ state.casosView=c.dataset.view; render(); }));
   document.querySelectorAll('.chip[data-savedidx]').forEach(c=>c.addEventListener('click', (e)=>{ if(e.target.dataset.delidx!==undefined){ e.stopPropagation(); removerVisao(Number(e.target.dataset.delidx)); return; } aplicarVisao(getViews()[Number(c.dataset.savedidx)]); }));
   const cs=document.getElementById('chipSalvar'); if(cs) cs.addEventListener('click', salvarVisaoAtual);
+  document.querySelectorAll('.seg-toggle .seg').forEach(b=>b.addEventListener('click', ()=>{ state.casosLayout=b.dataset.layout; render(); }));
+
+  if(layout==='kanban'){ wireKanban(); return; }
+
   document.querySelectorAll('th.sortable').forEach(thEl=>{ thEl.addEventListener('click', ()=>{ toggleSort(thEl.dataset.sort); render(); }); });
   document.querySelectorAll('.idchip').forEach(el=>{
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
