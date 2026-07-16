@@ -207,6 +207,14 @@
   /* Erros inline em formulários */
   .field.err input,.field.err select,.field.err textarea{border-color:#C63A32 !important;box-shadow:0 0 0 2px rgba(198,58,50,.15)}
   .field-msg{color:#C63A32;font-size:11.5px;margin-top:4px;font-weight:600}
+  /* Seleção em massa */
+  .chkcell{width:34px;text-align:center}
+  .rowchk,#chkAll{cursor:pointer;width:15px;height:15px;accent-color:#17181B}
+  tbody tr.sel-row{background:#FFF7D6}
+  .sel-bar{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:150;background:#17181B;color:#fff;border-radius:12px;box-shadow:0 14px 38px rgba(0,0,0,.32);display:flex;align-items:center;gap:9px;padding:9px 11px 9px 18px}
+  .sel-bar .sel-n{font-size:13px;font-weight:700;margin-right:5px;white-space:nowrap}
+  .sel-bar .btn{background:rgba(255,255,255,.13);color:#fff;border:0;padding:7px 13px}
+  .sel-bar .btn:hover{background:rgba(255,255,255,.24)}
   .close-btn{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E8E9EC;background:#fff;color:#565C64;font-size:15px;cursor:pointer}
   .close-btn:hover{background:#F7F8FA}
   .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#16181D;margin-bottom:12px;display:flex;align-items:center;gap:9px}
@@ -551,6 +559,46 @@ function showSkeleton(){ const m=document.getElementById('main'); if(!m) return;
 function clearFieldErrs(form){ if(!form) return; form.querySelectorAll('.field.err').forEach(f=>{ f.classList.remove('err'); const m=f.querySelector('.field-msg'); if(m) m.remove(); }); }
 function markFieldErr(inputEl, msg){ if(!inputEl) return; const field=inputEl.closest('.field'); if(!field) return; field.classList.add('err'); if(!field.querySelector('.field-msg')){ const d=document.createElement('div'); d.className='field-msg'; d.textContent=msg; field.appendChild(d); } }
 
+/* ---------- Seleção em massa (tela de casos) ---------- */
+let SEL = new Set(); // ids selecionados
+function limparSelecao(){ SEL.clear();
+  document.querySelectorAll('#main .rowchk').forEach(c=>c.checked=false);
+  document.querySelectorAll('#main tr.sel-row').forEach(t=>t.classList.remove('sel-row'));
+  const h=document.getElementById('chkAll'); if(h){ h.checked=false; h.indeterminate=false; }
+  selBar();
+}
+function selBar(){
+  let bar=document.getElementById('selBar');
+  if(SEL.size===0){ if(bar) bar.remove(); return; }
+  if(!bar){ bar=document.createElement('div'); bar.id='selBar'; bar.className='sel-bar'; document.body.appendChild(bar); }
+  bar.innerHTML=`<span class="sel-n">${SEL.size} selecionado(s)</span>
+    <button class="btn" id="selExport">Exportar CSV</button>
+    <button class="btn" id="selCopy">Copiar IDs</button>
+    <button class="btn" id="selClear">Limpar</button>`;
+  document.getElementById('selExport').onclick=exportarSelecionados;
+  document.getElementById('selCopy').onclick=copiarIdsSelecionados;
+  document.getElementById('selClear').onclick=limparSelecao;
+}
+function exportarSelecionados(){
+  const rows=RECORDS.filter(r=>SEL.has(r.id));
+  if(!rows.length) return;
+  const cols=[['ID',r=>r.idVenda],['Cliente/Card',r=>r.nomeCard],['Data',r=>fmtDate(r.date)],['Idade (dias)',r=>diasDesde(r.date)],
+    ['Setor',r=>r.setor],['Culpa de',r=>r.culpaDe],['Responsável',r=>r.responsavel],['Empresa',r=>r.empresa],
+    ['Tipo de problema',r=>r.subproblema],['Detalhe',r=>r.detalhe],['Qtd',r=>r.qtd],['Custo',r=>r.custo==null?'':r.custo],
+    ['Tipo de resolução',r=>r.tipoResolucao],['Que fim',r=>r.queFim],['Status',r=>r.auditado?'Auditado':'Pendente'],['Descrição',r=>r.descricao]];
+  const esc=(v)=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const csv='﻿'+cols.map(c=>esc(c[0])).join(';')+'\r\n'+
+    rows.map(r=>cols.map(c=>esc(c[1](r))).join(';')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='casos_seubone_'+rows.length+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast(rows.length+' caso(s) exportado(s)', true);
+}
+function copiarIdsSelecionados(){
+  const ids=RECORDS.filter(r=>SEL.has(r.id)).map(r=>r.idVenda);
+  navigator.clipboard?.writeText(ids.join('\n')); toast(ids.length+' ID(s) copiado(s)', true);
+}
+
 function mondayOf(d){ const dt=new Date(d); const day=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-day); dt.setHours(0,0,0,0); return dt; }
 function fmtDM(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
 function sundayOf(monday){ const s = new Date(monday); s.setDate(s.getDate()+6); return s; }
@@ -611,7 +659,7 @@ document.getElementById('fEmpresa').addEventListener('change', e=>{ state.empres
 document.getElementById('btnRefresh').addEventListener('click', refreshData);
 document.getElementById('btnNovoCaso').addEventListener('click', openNovoCaso);
 document.querySelectorAll('.nav-item').forEach(el=>{
-  el.addEventListener('click', ()=>{ closeDrawer(false); state.screen = el.dataset.screen; render(); });
+  el.addEventListener('click', ()=>{ closeDrawer(false); SEL.clear(); selBar(); state.screen = el.dataset.screen; render(); });
 });
 
 function cutoffFor(periodo){
@@ -1046,8 +1094,9 @@ function renderCasos(main, all){
       <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.</div></div>
         <input class="searchbar" id="buscaCaso" placeholder="Buscar por ID do pedido, cliente ou consultor…" value="${state.buscaCaso}"></div>
       <div class="tbl-wrap"><table>
-        <thead><tr>${th('id','ID')}${th('nome','Cliente / Card')}${th('data','Data')}${th('idade','Idade')}${th('setor','Setor')}${th('resp','Responsável')}${th('custo','Custo',true)}${th('status','Status')}</tr></thead>
-        <tbody>${rows.map(r=>`<tr class="clickable" data-id="${r.id}">
+        <thead><tr><th class="chkcell"><input type="checkbox" id="chkAll"></th>${th('id','ID')}${th('nome','Cliente / Card')}${th('data','Data')}${th('idade','Idade')}${th('setor','Setor')}${th('resp','Responsável')}${th('custo','Custo',true)}${th('status','Status')}</tr></thead>
+        <tbody>${rows.map(r=>`<tr class="clickable${SEL.has(r.id)?' sel-row':''}" data-id="${r.id}">
+            <td class="chkcell"><input type="checkbox" class="rowchk" data-id="${r.id}" ${SEL.has(r.id)?'checked':''}></td>
             <td><span class="idchip" data-copy="${r.idVenda}">#${r.idVenda}</span></td>
             <td style="font-weight:600">${r.nomeCard}</td>
             <td>${fmtDate(r.date)}</td>
@@ -1070,7 +1119,20 @@ function renderCasos(main, all){
   document.querySelectorAll('.idchip').forEach(el=>{
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
   });
-  document.querySelectorAll('tr.clickable').forEach(tr=>{ tr.addEventListener('click', ()=> openCaso(Number(tr.dataset.id))); });
+  document.querySelectorAll('tr.clickable').forEach(tr=>{ tr.addEventListener('click', (e)=>{ if(e.target.closest('.chkcell')) return; openCaso(Number(tr.dataset.id)); }); });
+
+  // seleção em massa
+  const syncChkAll=()=>{ const chks=document.querySelectorAll('#main .rowchk'); const marc=document.querySelectorAll('#main .rowchk:checked').length; const h=document.getElementById('chkAll'); if(h){ h.checked = chks.length>0 && marc===chks.length; h.indeterminate = marc>0 && marc<chks.length; } };
+  document.querySelectorAll('#main .rowchk').forEach(chk=>{
+    chk.addEventListener('click', e=>e.stopPropagation());
+    chk.addEventListener('change', ()=>{ const id=Number(chk.dataset.id); const tr=chk.closest('tr'); if(chk.checked){ SEL.add(id); tr.classList.add('sel-row'); } else { SEL.delete(id); tr.classList.remove('sel-row'); } syncChkAll(); selBar(); });
+  });
+  const chkAll=document.getElementById('chkAll');
+  if(chkAll){ chkAll.addEventListener('click', e=>e.stopPropagation());
+    chkAll.addEventListener('change', ()=>{ document.querySelectorAll('#main .rowchk').forEach(chk=>{ chk.checked=chkAll.checked; const id=Number(chk.dataset.id); const tr=chk.closest('tr'); if(chkAll.checked){ SEL.add(id); tr.classList.add('sel-row'); } else { SEL.delete(id); tr.classList.remove('sel-row'); } }); chkAll.indeterminate=false; selBar(); });
+    syncChkAll();
+  }
+  selBar();
   if(CASO_ATUAL!==null) highlightRow(CASO_ATUAL);
 }
 
