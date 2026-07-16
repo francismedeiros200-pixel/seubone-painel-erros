@@ -142,6 +142,20 @@
   .modal-head{padding:20px 24px;border-bottom:1px solid #EFF0F3;display:flex;align-items:flex-start;gap:16px}
   .modal-body{padding:20px 24px;overflow-y:auto;flex:1}
   .modal-foot{padding:14px 24px;border-top:1px solid #EFF0F3;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;background:#fff;border-radius:0 0 14px 14px;align-items:center}
+  /* Drawer lateral (detalhe/auditoria do caso) — não bloqueia a lista */
+  .drawer-scrim{position:fixed;inset:0;background:rgba(17,18,20,.25);z-index:100;opacity:0;transition:opacity .18s ease}
+  .drawer-scrim.show{opacity:1}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:min(560px,94vw);background:#fff;box-shadow:-16px 0 48px rgba(0,0,0,.20);z-index:101;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);will-change:transform}
+  .drawer.show{transform:translateX(0)}
+  .drawer-head{padding:15px 20px;border-bottom:1px solid #EFF0F3;display:flex;align-items:flex-start;gap:10px}
+  .drawer-nav{display:flex;align-items:center;gap:6px;padding-top:2px}
+  .drawer-body{padding:18px 20px;overflow-y:auto;flex:1}
+  .drawer-foot{padding:14px 20px;border-top:1px solid #EFF0F3;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;background:#fff;align-items:center}
+  .navbtn{width:30px;height:30px;border:1px solid #E6E8EC;background:#fff;border-radius:8px;cursor:pointer;font-size:14px;line-height:1;color:#3A3F47;display:inline-flex;align-items:center;justify-content:center}
+  .navbtn:hover{background:#FAFBFC;border-color:#D0D4DA}
+  .navbtn:disabled{opacity:.35;cursor:default}
+  tbody tr.row-active{background:#FFF7D6 !important;box-shadow:inset 3px 0 0 #FFC400}
+  @media (max-width:640px){ .drawer{width:100vw} }
   .close-btn{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E8E9EC;background:#fff;color:#565C64;font-size:15px;cursor:pointer}
   .close-btn:hover{background:#F7F8FA}
   .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#16181D;margin-bottom:12px;display:flex;align-items:center;gap:9px}
@@ -413,6 +427,7 @@ async function boot(){
   document.getElementById('bootScreen').style.display = 'none';
   document.getElementById('appRoot').style.display = 'flex';
   render();
+  syncFromHash(); // abre o drawer se a URL já apontar para um caso (link compartilhado)
 }
 
 async function refreshData(silent){
@@ -430,6 +445,7 @@ async function refreshData(silent){
 /* ================= ESTADO / FILTROS ================= */
 const state = { screen:'exec', periodoTipo:'relativo', periodo:'Últimos 12 meses', mes:'', semana:'', setor:'', empresa:'', granularidade:'Mensal', buscaCaso:'', semanaReuniao:null };
 let charts = {};
+let CASO_ATUAL = null; // id do caso aberto no drawer lateral (null = fechado)
 
 function mondayOf(d){ const dt=new Date(d); const day=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-day); dt.setHours(0,0,0,0); return dt; }
 function fmtDM(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
@@ -491,7 +507,7 @@ document.getElementById('fEmpresa').addEventListener('change', e=>{ state.empres
 document.getElementById('btnRefresh').addEventListener('click', refreshData);
 document.getElementById('btnNovoCaso').addEventListener('click', openNovoCaso);
 document.querySelectorAll('.nav-item').forEach(el=>{
-  el.addEventListener('click', ()=>{ state.screen = el.dataset.screen; render(); });
+  el.addEventListener('click', ()=>{ closeDrawer(false); state.screen = el.dataset.screen; render(); });
 });
 
 function cutoffFor(periodo){
@@ -890,6 +906,7 @@ function renderCasos(main, all){
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
   });
   document.querySelectorAll('tr.clickable').forEach(tr=>{ tr.addEventListener('click', ()=> openCaso(Number(tr.dataset.id))); });
+  if(CASO_ATUAL!==null) highlightRow(CASO_ATUAL);
 }
 
 /* ================= REUNIÃO SEMANAL · ESCRITÓRIO ================= */
@@ -981,87 +998,166 @@ function renderReuniao(main){
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
   });
   document.querySelectorAll('tr.clickable').forEach(tr=>{ tr.addEventListener('click', ()=> openCaso(Number(tr.dataset.id))); });
+  if(CASO_ATUAL!==null) highlightRow(CASO_ATUAL);
 }
 
-function openCaso(id){
-  const r = RECORDS.find(x=>x.id===id);
-  const modalRoot = document.getElementById('modalRoot');
-  const editable = !r.auditado;
+/* ---------- Roteamento por hash (#/casos/:id) + drawer lateral ---------- */
+function parseCasoHash(){ const m = (location.hash||'').match(/^#\/casos\/(-?\d+)/); return m ? Number(m[1]) : null; }
 
+/** IDs dos casos na ordem em que aparecem na lista atual (para navegar ↑/↓). */
+function caseNavIds(){ return Array.from(document.querySelectorAll('#main tr.clickable')).map(t=>Number(t.dataset.id)); }
+
+function highlightRow(id){
+  document.querySelectorAll('tr.row-active').forEach(t=>t.classList.remove('row-active'));
+  const tr = document.querySelector('#main tr.clickable[data-id="'+id+'"]');
+  if(tr){ tr.classList.add('row-active'); tr.scrollIntoView({block:'nearest'}); }
+}
+
+/** Abrir um caso = navegar para a rota dele (a rota dispara o drawer). */
+function openCaso(id){
+  if(parseCasoHash() === id) renderDrawer(id);
+  else location.hash = '#/casos/' + id;
+}
+
+function closeDrawer(fromHash){
+  const root = document.getElementById('modalRoot');
+  const dr = root.querySelector('.drawer'), sc = root.querySelector('.drawer-scrim');
+  CASO_ATUAL = null;
+  document.querySelectorAll('tr.row-active').forEach(t=>t.classList.remove('row-active'));
+  if(dr) dr.classList.remove('show');
+  if(sc) sc.classList.remove('show');
+  setTimeout(()=>{ const el=document.getElementById('modalRoot'); if(CASO_ATUAL===null && el && el.querySelector('.drawer')) el.innerHTML=''; }, 240);
+  if(!fromHash && parseCasoHash()!==null) history.pushState(null, '', '#/casos');
+}
+
+function syncFromHash(){
+  const id = parseCasoHash();
+  if(id!==null && RECORDS.find(x=>x.id===id)) renderDrawer(id);
+  else closeDrawer(true);
+}
+window.addEventListener('hashchange', syncFromHash);
+
+/* Navegação por teclado enquanto o drawer está aberto: Esc fecha, ↑/↓ (ou J/K) troca de caso. */
+document.addEventListener('keydown', (e)=>{
+  if(CASO_ATUAL===null) return;
+  if(e.key==='Escape'){ closeDrawer(false); return; }
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable) return;
+  if(e.key==='ArrowDown'||e.key==='j'||e.key==='J'){ const n=document.getElementById('drwNext'); if(n&&n.dataset.target){ e.preventDefault(); openCaso(Number(n.dataset.target)); } }
+  else if(e.key==='ArrowUp'||e.key==='k'||e.key==='K'){ const p=document.getElementById('drwPrev'); if(p&&p.dataset.target){ e.preventDefault(); openCaso(Number(p.dataset.target)); } }
+});
+
+/** Monta o conteúdo interno do drawer (cabeçalho + corpo + rodapé). */
+function drawerInnerHTML(r){
+  const editable = !r.auditado;
   const fieldOrSel = (opts, current) => opts.map(o=>`<option ${o===current?'selected':''}>${o}</option>`).join('');
   const resOptions = RESOLUCAO_TABLE.map(o=>`<option value="${o.tipo}" ${o.tipo===r.tipoResolucao?'selected':''}>${o.tipo}</option>`).join('');
   const causasConhecidas = Array.from(new Set(RECORDS.map(x=>x.subproblema).filter(Boolean)));
 
-  modalRoot.innerHTML = `
-    <div class="overlay" id="overlay">
-      <div class="modal">
-        <div class="modal-head">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:19px;font-weight:800;letter-spacing:-.2px">${r.nomeCard}</div>
-            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px">
-              <span class="idchip" id="idCopy" data-copy="${r.idVenda}">#${r.idVenda}</span>
-              <span class="badge ${r.auditado?'pill-green':'pill-red'}">${r.auditado?'Auditado':'Pendente de auditoria'}</span>
-              ${!USING_DEMO ? `<span class="badge pill-grey">linha ${r.id} na planilha</span>` : ''}
-              ${r.linkPedido ? `<a href="${r.linkPedido}" target="_blank" class="badge" style="background:#EEF0F3;color:#565C64;text-decoration:none">Abrir pedido ↗</a>` : ''}
-            </div>
-          </div>
-          <button class="close-btn" id="closeModal">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="sec-title">Dados do registro</div>
-          <div class="field-grid" style="margin-bottom:16px">
-            <div class="field"><label>Data de registro</label><div class="readonly-block">${fmtDate(r.date)}</div></div>
-            <div class="field"><label>Quem cadastrou o erro</label><div class="readonly-block">${r.quemCadastrou}</div></div>
-          </div>
-          <div class="field" style="margin-bottom:20px"><label>Descrição do erro</label><div class="readonly-block" style="font-style:italic">${r.descricao || '—'}</div></div>
+  const ids = caseNavIds(); const idx = ids.indexOf(r.id);
+  const prevId = idx>0 ? ids[idx-1] : '';
+  const nextId = (idx>=0 && idx<ids.length-1) ? ids[idx+1] : '';
+  const pos = idx>=0 ? `${idx+1} de ${ids.length}` : '';
 
-          <div class="sec-title">Auditoria ${editable ? '<span class="badge pill-amber">preencher agora</span>' : '<span class="badge pill-grey">já registrada</span>'}</div>
-          <form id="formAuditoria">
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Setor do problema</label>${editable ? `<select name="setor">${fieldOrSel(SETORES_PADRAO, r.setor)}</select>` : `<div class="readonly-block">${r.setor||'—'}</div>`}</div>
-              <div class="field"><label>Culpa de:</label>${editable ? `<select name="culpaDe">${fieldOrSel(CULPADOS_PADRAO, r.culpaDe)}</select>` : `<div class="readonly-block">${r.culpaDe||'—'}</div>`}</div>
-            </div>
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Responsável</label>${editable ? `<input name="responsavel" value="${r.responsavel||''}" placeholder="Nome do consultor ou 'Produção (Fábrica)'">` : `<div class="readonly-block">${r.responsavel||'—'}</div>`}</div>
-              <div class="field"><label>Empresa</label>${editable ? `<select name="empresa"><option value="ACM" ${r.empresa==='ACM'?'selected':''}>ACM</option><option value="ITC" ${r.empresa==='ITC'?'selected':''}>ITC</option></select>` : `<div class="readonly-block">${r.empresa||'—'}</div>`}</div>
-            </div>
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Tipo de produto</label>${editable ? `<input name="tipoProduto" list="prodList" value="${r.tipoProduto||''}">` : `<div class="readonly-block">${r.tipoProduto||'—'}</div>`}</div>
-              <div class="field"><label>Tipo de problema (causa)</label>${editable ? `<input name="tipoProblema" list="subList" value="${r.subproblema||''}" placeholder="Ex: Folha errada, Tonalidade do Silk...">` : `<div class="readonly-block">${r.subproblema||'—'}</div>`}</div>
-              <datalist id="subList">${causasConhecidas.map(s=>`<option value="${s}">`).join('')}</datalist>
-              <datalist id="prodList">${TIPOS_PRODUTO.map(s=>`<option value="${s}">`).join('')}</datalist>
-            </div>
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Quantidade de produtos errados</label>${editable ? `<input type="number" name="qtd" value="${r.qtd ?? ''}" min="0">` : `<div class="readonly-block">${r.qtd ?? '—'}</div>`}</div>
-              <div class="field"><label>Que fim teve o pedido?</label>${editable ? `<select name="queFim">${fieldOrSel(QUE_FIM_LIST, r.queFim)}</select>` : `<div class="readonly-block">${r.queFim||'—'}</div>`}</div>
-            </div>
-            <div class="field-grid" style="margin-bottom:6px">
-              <div class="field"><label>Tipo de resolução</label>${editable ? `<select name="tipoResolucao" id="selResolucao">${resOptions}</select>` : `<div class="readonly-block">${r.tipoResolucao||'—'}</div>`}</div>
-              <div class="field"><label>Custo do erro (R$)</label>${editable ? `<input type="number" name="custo" id="inpCusto" value="${r.custo ?? ''}" min="0">` : `<div class="readonly-block">${brl(r.custo)}</div>`}</div>
-            </div>
-            <div class="logica-box" id="logicaBox">${r.tipoResolucao ? getRes(r.tipoResolucao).logica : 'Selecione o tipo de resolução.'}</div>
-          </form>
-        </div>
-        <div class="modal-foot">
-          <span class="save-msg" id="saveMsg"></span>
-          <button class="btn btn-ghost" id="btnClose2">Fechar</button>
-          ${editable ? `<button class="btn btn-primary" id="btnSalvar">Salvar auditoria</button>` : ''}
+  return `
+    <div class="drawer-head">
+      <div class="drawer-nav">
+        <button class="navbtn" id="drwPrev" data-target="${prevId}" ${prevId===''?'disabled':''} title="Caso anterior (↑)">↑</button>
+        <button class="navbtn" id="drwNext" data-target="${nextId}" ${nextId===''?'disabled':''} title="Próximo caso (↓)">↓</button>
+        ${pos ? `<span style="font-size:11.5px;color:#8A9099;margin-left:4px;white-space:nowrap">${pos}</span>` : ''}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nomeCard}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+          <span class="idchip" id="idCopy" data-copy="${r.idVenda}">#${r.idVenda}</span>
+          <span class="badge ${r.auditado?'pill-green':'pill-red'}">${r.auditado?'Auditado':'Pendente de auditoria'}</span>
+          ${!USING_DEMO ? `<span class="badge pill-grey">linha ${r.id} na planilha</span>` : ''}
+          ${r.linkPedido ? `<a href="${r.linkPedido}" target="_blank" class="badge" style="background:#EEF0F3;color:#565C64;text-decoration:none">Abrir pedido ↗</a>` : ''}
         </div>
       </div>
+      <button class="close-btn" id="drwClose">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="sec-title">Dados do registro</div>
+      <div class="field-grid" style="margin-bottom:16px">
+        <div class="field"><label>Data de registro</label><div class="readonly-block">${fmtDate(r.date)}</div></div>
+        <div class="field"><label>Quem cadastrou o erro</label><div class="readonly-block">${r.quemCadastrou}</div></div>
+      </div>
+      <div class="field" style="margin-bottom:20px"><label>Descrição do erro</label><div class="readonly-block" style="font-style:italic">${r.descricao || '—'}</div></div>
+
+      <div class="sec-title">Auditoria ${editable ? '<span class="badge pill-amber">preencher agora</span>' : '<span class="badge pill-grey">já registrada</span>'}</div>
+      <form id="formAuditoria">
+        <div class="field-grid" style="margin-bottom:14px">
+          <div class="field"><label>Setor do problema</label>${editable ? `<select name="setor">${fieldOrSel(SETORES_PADRAO, r.setor)}</select>` : `<div class="readonly-block">${r.setor||'—'}</div>`}</div>
+          <div class="field"><label>Culpa de:</label>${editable ? `<select name="culpaDe">${fieldOrSel(CULPADOS_PADRAO, r.culpaDe)}</select>` : `<div class="readonly-block">${r.culpaDe||'—'}</div>`}</div>
+        </div>
+        <div class="field-grid" style="margin-bottom:14px">
+          <div class="field"><label>Responsável</label>${editable ? `<input name="responsavel" value="${r.responsavel||''}" placeholder="Nome do consultor ou 'Produção (Fábrica)'">` : `<div class="readonly-block">${r.responsavel||'—'}</div>`}</div>
+          <div class="field"><label>Empresa</label>${editable ? `<select name="empresa"><option value="ACM" ${r.empresa==='ACM'?'selected':''}>ACM</option><option value="ITC" ${r.empresa==='ITC'?'selected':''}>ITC</option></select>` : `<div class="readonly-block">${r.empresa||'—'}</div>`}</div>
+        </div>
+        <div class="field-grid" style="margin-bottom:14px">
+          <div class="field"><label>Tipo de produto</label>${editable ? `<input name="tipoProduto" list="prodList" value="${r.tipoProduto||''}">` : `<div class="readonly-block">${r.tipoProduto||'—'}</div>`}</div>
+          <div class="field"><label>Tipo de problema (causa)</label>${editable ? `<input name="tipoProblema" list="subList" value="${r.subproblema||''}" placeholder="Ex: Folha errada, Tonalidade do Silk...">` : `<div class="readonly-block">${r.subproblema||'—'}</div>`}</div>
+          <datalist id="subList">${causasConhecidas.map(s=>`<option value="${s}">`).join('')}</datalist>
+          <datalist id="prodList">${TIPOS_PRODUTO.map(s=>`<option value="${s}">`).join('')}</datalist>
+        </div>
+        <div class="field-grid" style="margin-bottom:14px">
+          <div class="field"><label>Quantidade de produtos errados</label>${editable ? `<input type="number" name="qtd" value="${r.qtd ?? ''}" min="0">` : `<div class="readonly-block">${r.qtd ?? '—'}</div>`}</div>
+          <div class="field"><label>Que fim teve o pedido?</label>${editable ? `<select name="queFim">${fieldOrSel(QUE_FIM_LIST, r.queFim)}</select>` : `<div class="readonly-block">${r.queFim||'—'}</div>`}</div>
+        </div>
+        <div class="field-grid" style="margin-bottom:6px">
+          <div class="field"><label>Tipo de resolução</label>${editable ? `<select name="tipoResolucao" id="selResolucao">${resOptions}</select>` : `<div class="readonly-block">${r.tipoResolucao||'—'}</div>`}</div>
+          <div class="field"><label>Custo do erro (R$)</label>${editable ? `<input type="number" name="custo" id="inpCusto" value="${r.custo ?? ''}" min="0">` : `<div class="readonly-block">${brl(r.custo)}</div>`}</div>
+        </div>
+        <div class="logica-box" id="logicaBox">${r.tipoResolucao ? getRes(r.tipoResolucao).logica : 'Selecione o tipo de resolução.'}</div>
+      </form>
+    </div>
+    <div class="drawer-foot">
+      <span class="save-msg" id="saveMsg"></span>
+      <button class="btn btn-ghost" id="drwFechar">Fechar</button>
+      ${editable ? `<button class="btn btn-primary" id="btnSalvar">Salvar auditoria</button>` : ''}
     </div>
   `;
+}
 
-  const close = ()=>{ modalRoot.innerHTML=''; };
-  document.getElementById('closeModal').addEventListener('click', close);
-  document.getElementById('btnClose2').addEventListener('click', close);
-  document.getElementById('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') close(); });
-  document.getElementById('idCopy').addEventListener('click', ()=>{ navigator.clipboard?.writeText(String(r.idVenda)); });
+/** Renderiza (ou re-renderiza) o drawer para o caso id. */
+function renderDrawer(id){
+  const r = RECORDS.find(x=>x.id===id);
+  if(!r){ closeDrawer(true); return; }
+  CASO_ATUAL = id;
+  const root = document.getElementById('modalRoot');
+  const existing = root.querySelector('.drawer');
+  const html = drawerInnerHTML(r);
+  if(existing){
+    existing.innerHTML = html; // navegação entre casos — sem re-animar a entrada
+  } else {
+    root.innerHTML = `<div class="drawer-scrim" id="drawerScrim"></div><div class="drawer" id="drawer">${html}</div>`;
+    const scrim = document.getElementById('drawerScrim');
+    const dr = document.getElementById('drawer');
+    scrim.addEventListener('click', ()=>closeDrawer(false));
+    void dr.offsetWidth; // força reflow para a transição de entrada disparar (não depende de rAF)
+    scrim.classList.add('show'); dr.classList.add('show');
+  }
+  wireDrawer(r);
+  highlightRow(id);
+}
+
+/** Liga os eventos do drawer (fechar, navegar, copiar id, salvar auditoria). */
+function wireDrawer(r){
+  const editable = !r.auditado;
+  const $ = (i)=>document.getElementById(i);
+  $('drwClose').addEventListener('click', ()=>closeDrawer(false));
+  const fechar = $('drwFechar'); if(fechar) fechar.addEventListener('click', ()=>closeDrawer(false));
+  const idCopy = $('idCopy'); if(idCopy) idCopy.addEventListener('click', ()=>{ navigator.clipboard?.writeText(String(r.idVenda)); idCopy.textContent='Copiado!'; setTimeout(()=>{ idCopy.textContent='#'+r.idVenda; },900); });
+  const prev = $('drwPrev'), next = $('drwNext');
+  if(prev) prev.addEventListener('click', ()=>{ if(prev.dataset.target) openCaso(Number(prev.dataset.target)); });
+  if(next) next.addEventListener('click', ()=>{ if(next.dataset.target) openCaso(Number(next.dataset.target)); });
 
   if(editable){
-    const selRes = document.getElementById('selResolucao');
-    selRes.addEventListener('change', ()=>{ document.getElementById('logicaBox').textContent = getRes(selRes.value).logica; });
-    document.getElementById('btnSalvar').addEventListener('click', async ()=>{
-      const fd = new FormData(document.getElementById('formAuditoria'));
+    const selRes = $('selResolucao');
+    selRes.addEventListener('change', ()=>{ $('logicaBox').textContent = getRes(selRes.value).logica; });
+    $('btnSalvar').addEventListener('click', async ()=>{
+      const fd = new FormData($('formAuditoria'));
       const tipoResolucao = fd.get('tipoResolucao');
       if(!tipoResolucao){ alert('Selecione o tipo de resolução.'); return; }
       const fields = {
@@ -1069,8 +1165,8 @@ function openCaso(id){
         empresa: fd.get('empresa'), tipoProduto: fd.get('tipoProduto'), tipoProblema: fd.get('tipoProblema'),
         qtd: Number(fd.get('qtd')||0), custo: Number(fd.get('custo')||0), queFim: fd.get('queFim'), tipoResolucao,
       };
-      const btn = document.getElementById('btnSalvar');
-      const msg = document.getElementById('saveMsg');
+      const btn = $('btnSalvar');
+      const msg = $('saveMsg');
       btn.disabled = true; msg.textContent = USING_DEMO ? 'Salvando (demo)…' : 'Gravando na planilha…';
       try{
         if(!USING_DEMO){
@@ -1084,7 +1180,7 @@ function openCaso(id){
           tipoProduto:fields.tipoProduto, subproblema:fields.tipoProblema, qtd:fields.qtd, custo:fields.custo,
           queFim:fields.queFim, tipoResolucao:fields.tipoResolucao, auditado:true });
         derivarListasDinamicas(); initFilterOptions();
-        close(); render();
+        closeDrawer(false); render();
         if(!USING_DEMO) setTimeout(()=>{ refreshData(true).catch(()=>{}); }, 1800);
       } catch(err){
         msg.textContent = 'Erro de rede: ' + err.message + ' — confira a conexão e tente de novo.'; btn.disabled = false;
