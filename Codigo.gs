@@ -20,7 +20,12 @@
  * ============================================================================
  */
 
-/** Nome da aba onde ficam os registros. Ajuste se a sua aba tiver outro nome. */
+/**
+ * Aba onde ficam os registros. O gid é o identificador fixo da aba (vem da URL:
+ * .../edit?gid=396842648) e NÃO muda mesmo que renomeiem a aba ou reordenem.
+ * É a forma mais segura de mirar a aba certa. O nome fica só como reserva.
+ */
+var SHEET_GID = 396842648;
 var SHEET_NAME = 'Cadastro de erros';
 
 /**
@@ -29,7 +34,7 @@ var SHEET_NAME = 'Cadastro de erros';
  * A ordem importa (a primeira que casar vence).
  */
 var COLUNAS = {
-  data:          ['carimbo de data', 'data da venda', 'timestamp'],  // + fallback: 1ª coluna
+  data:          ['carimbo de data/hora'],  // a data real fica na 1ª coluna; o fallback abaixo garante o índice 0
   auditoria:     ['auditoria'],
   idVenda:       ['id da venda'],
   nomeCard:      ['nome do card'],
@@ -65,9 +70,14 @@ function norm_(s) {
 
 function getSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) sh = ss.getSheets()[0]; // fallback: primeira aba
-  return sh;
+  var sheets = ss.getSheets();
+  // 1º: pela gid (identificador fixo da aba) — o mais confiável
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === SHEET_GID) return sheets[i];
+  }
+  // 2º: pelo nome; 3º: primeira aba (último recurso)
+  var byName = ss.getSheetByName(SHEET_NAME);
+  return byName || sheets[0];
 }
 
 /** Constrói { chaveLogica: indiceDaColuna(0-based) } a partir da linha 1. */
@@ -76,14 +86,25 @@ function buildColMap_(header) {
   var map = {};
   Object.keys(COLUNAS).forEach(function (key) {
     var pistas = COLUNAS[key];
-    for (var p = 0; p < pistas.length; p++) {
-      var pista = norm_(pistas[p]);
+    var found = null;
+    // 1ª passada: match EXATO — evita colisões de substring
+    // (ex.: "Solução" vs "Descrição e solução do erro").
+    for (var p = 0; p < pistas.length && found === null; p++) {
+      var pe = norm_(pistas[p]);
       for (var c = 0; c < normHeaders.length; c++) {
-        if (normHeaders[c].indexOf(pista) !== -1) { map[key] = c; return; }
+        if (normHeaders[c] === pe) { found = c; break; }
       }
     }
+    // 2ª passada: match por inclusão (para cabeçalhos com sufixos/pontuação).
+    for (var p2 = 0; p2 < pistas.length && found === null; p2++) {
+      var pi = norm_(pistas[p2]);
+      for (var c2 = 0; c2 < normHeaders.length; c2++) {
+        if (normHeaders[c2].indexOf(pi) !== -1) { found = c2; break; }
+      }
+    }
+    if (found !== null) map[key] = found;
   });
-  // Fallback: se não achou "data", usa a 1ª coluna (que guarda a data no layout atual).
+  // Fallback: a data real está na 1ª coluna do layout atual.
   if (map.data == null) map.data = 0;
   return map;
 }
@@ -313,6 +334,7 @@ function migrarStatus() {
  */
 function verColunas() {
   var sh = getSheet_();
+  Logger.log('Aba lida: "' + sh.getName() + '" (gid ' + sh.getSheetId() + ') — ' + sh.getLastColumn() + ' colunas, ' + sh.getLastRow() + ' linhas');
   var header = sh.getDataRange().getValues()[0];
   var col = buildColMap_(header);
   Logger.log('Cabeçalhos da planilha:');
