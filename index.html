@@ -29,7 +29,7 @@
   ::selection{background:#FFE38A}
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-thumb{background:#D8DBE0;border-radius:8px;border:2px solid #F7F8FA}
-  select:focus-visible,input:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid #FFC400;outline-offset:1px}
+  select:focus-visible,input:focus-visible,button:focus-visible,textarea:focus-visible,.nav-item:focus-visible,[tabindex]:focus-visible{outline:none;box-shadow:0 0 0 2px #FFC400,0 0 0 4px #17181B}
   a{color:inherit}
   .layout{display:flex;min-height:100vh}
 
@@ -185,6 +185,28 @@
   .ck .ck-v{font-size:22px;font-weight:800;margin-top:3px}
   .ck.warn{border-color:#F3C0BB;background:#FEF6F5}
   .ck.warn .ck-v{color:#A62A23}
+  /* Chips de visões / filtros rápidos */
+  .chips-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .chip{border:1px solid #E6E8EC;background:#fff;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:#3A3F47;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;line-height:1.4}
+  .chip:hover{border-color:#D0D4DA;background:#FAFBFC}
+  .chip.on{background:#17181B;color:#fff;border-color:#17181B}
+  .chip .x{opacity:.55;font-weight:700;margin-left:2px}
+  .chip .x:hover{opacity:1}
+  .chip-add{border-style:dashed;color:#6B7280}
+  .chip-sep{width:1px;height:20px;background:#E6E8EC;margin:0 3px}
+  /* Toast */
+  .toast-wrap{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .toast{background:#17181B;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;max-width:90vw}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast .tok{color:#8FE3B0;font-weight:800}
+  .toast .terr{color:#FF9B94;font-weight:800}
+  /* Skeleton loading */
+  .skl{background:linear-gradient(90deg,#EEF0F3 25%,#F5F6F8 37%,#EEF0F3 63%);background-size:400% 100%;animation:skl 1.4s ease infinite;border-radius:6px}
+  @keyframes skl{0%{background-position:100% 0}100%{background-position:0 0}}
+  .skl-row{height:16px;margin:12px 0}
+  /* Erros inline em formulários */
+  .field.err input,.field.err select,.field.err textarea{border-color:#C63A32 !important;box-shadow:0 0 0 2px rgba(198,58,50,.15)}
+  .field-msg{color:#C63A32;font-size:11.5px;margin-top:4px;font-weight:600}
   .close-btn{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E8E9EC;background:#fff;color:#565C64;font-size:15px;cursor:pointer}
   .close-btn:hover{background:#F7F8FA}
   .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#16181D;margin-bottom:12px;display:flex;align-items:center;gap:9px}
@@ -453,7 +475,11 @@ async function boot(){
     USING_DEMO = true;
   }
   derivarListasDinamicas();
+  restoreState(); // recupera a última visão (tela, setor, empresa, filtro rápido, ordenação)
   initFilterOptions();
+  const fs=document.getElementById('fSetor'), fe=document.getElementById('fEmpresa');
+  if(fs && state.setor) fs.value=state.setor;
+  if(fe && state.empresa) fe.value=state.empresa;
   document.getElementById('bootScreen').style.display = 'none';
   document.getElementById('appRoot').style.display = 'flex';
   render();
@@ -462,13 +488,17 @@ async function boot(){
 
 async function refreshData(silent){
   const btn = document.getElementById('btnRefresh');
-  if(!silent){ btn.textContent = '…'; btn.disabled = true; }
+  if(!silent){ btn.textContent = '…'; btn.disabled = true; showSkeleton(); }
   try{
     if(CONFIG.API_URL){ RECORDS = await loadRealData(); USING_DEMO = false; }
     derivarListasDinamicas();
     initFilterOptions();
+    const fs=document.getElementById('fSetor'), fe=document.getElementById('fEmpresa');
+    if(fs && state.setor) fs.value=state.setor;
+    if(fe && state.empresa) fe.value=state.empresa;
     render();
-  } catch(err){ if(!silent) alert('Não consegui atualizar: ' + err.message); else console.error('Atualização em segundo plano falhou:', err); }
+    if(!silent) toast('Dados atualizados', true);
+  } catch(err){ if(!silent){ render(); toast('Não consegui atualizar: ' + err.message, false); } else console.error('Atualização em segundo plano falhou:', err); }
   finally { if(!silent){ btn.textContent = '⟳'; btn.disabled = false; } }
 }
 
@@ -477,6 +507,49 @@ const state = { screen:'exec', periodoTipo:'relativo', periodo:'Últimos 12 mese
 let charts = {};
 let CASO_ATUAL = null; // id do caso aberto no drawer lateral (null = fechado)
 state.casosSort = { key:'', dir:'desc' }; // ordenação da tabela de casos ('' = padrão: pendentes primeiro)
+state.casosView = 'todos'; // filtro rápido da tela de casos: todos | pendentes | parados7 | altoCusto
+
+/* ---------- Persistência da visão (localStorage) ---------- */
+const LS_STATE = 'seubone_erros_state_v1';
+const LS_VIEWS = 'seubone_erros_views_v1';
+function persistState(){ try{ localStorage.setItem(LS_STATE, JSON.stringify({ screen:state.screen, setor:state.setor, empresa:state.empresa, casosView:state.casosView, casosSort:state.casosSort })); }catch(e){} }
+function restoreState(){ try{ const s=JSON.parse(localStorage.getItem(LS_STATE)||'{}');
+  if(s.screen) state.screen=s.screen;
+  if(s.setor!=null) state.setor=s.setor;
+  if(s.empresa!=null) state.empresa=s.empresa;
+  if(s.casosView) state.casosView=s.casosView;
+  if(s.casosSort && s.casosSort.key!==undefined) state.casosSort=s.casosSort;
+}catch(e){} }
+function getViews(){ try{ return JSON.parse(localStorage.getItem(LS_VIEWS)||'[]'); }catch(e){ return []; } }
+function setViews(v){ try{ localStorage.setItem(LS_VIEWS, JSON.stringify(v)); }catch(e){} }
+function salvarVisaoAtual(){
+  const nome=prompt('Nome da visão (ex: Fábrica pendentes):'); if(!nome||!nome.trim()) return;
+  const views=getViews(); views.push({ nome:nome.trim(), setor:state.setor||'', empresa:state.empresa||'', casosView:state.casosView||'todos' });
+  setViews(views); toast('Visão salva', true); render();
+}
+function aplicarVisao(v){ state.setor=v.setor||''; state.empresa=v.empresa||''; state.casosView=v.casosView||'todos';
+  const fs=document.getElementById('fSetor'), fe=document.getElementById('fEmpresa'); if(fs) fs.value=state.setor; if(fe) fe.value=state.empresa; render(); }
+function removerVisao(i){ const views=getViews(); views.splice(i,1); setViews(views); render(); }
+
+/* ---------- Toast (feedback de ações) ---------- */
+function toast(msg, ok){
+  let wrap=document.getElementById('toastWrap');
+  if(!wrap){ wrap=document.createElement('div'); wrap.id='toastWrap'; wrap.className='toast-wrap'; document.body.appendChild(wrap); }
+  const t=document.createElement('div'); t.className='toast';
+  t.innerHTML=(ok===true?'<span class="tok">✓</span> ':ok===false?'<span class="terr">!</span> ':'')+msg;
+  wrap.appendChild(t); void t.offsetWidth; t.classList.add('show');
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),250); }, 3200);
+}
+
+/* ---------- Skeleton de carregamento ---------- */
+function showSkeleton(){ const m=document.getElementById('main'); if(!m) return;
+  const larguras=[70,55,80,48,66,74,52,60];
+  m.innerHTML='<div class="card">'+larguras.map(w=>`<div class="skl skl-row" style="width:${w}%"></div>`).join('')+'</div>';
+}
+
+/* ---------- Erros inline em formulários ---------- */
+function clearFieldErrs(form){ if(!form) return; form.querySelectorAll('.field.err').forEach(f=>{ f.classList.remove('err'); const m=f.querySelector('.field-msg'); if(m) m.remove(); }); }
+function markFieldErr(inputEl, msg){ if(!inputEl) return; const field=inputEl.closest('.field'); if(!field) return; field.classList.add('err'); if(!field.querySelector('.field-msg')){ const d=document.createElement('div'); d.className='field-msg'; d.textContent=msg; field.appendChild(d); } }
 
 function mondayOf(d){ const dt=new Date(d); const day=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-day); dt.setHours(0,0,0,0); return dt; }
 function fmtDM(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
@@ -598,6 +671,7 @@ function moda(list, key){
 
 /* ================= RENDER ================= */
 function render(){
+  persistState();
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===state.screen));
   document.getElementById('navBadge').textContent = RECORDS.filter(r=>!r.auditado).length;
   Object.values(charts).forEach(c=>{ try{ c.destroy(); }catch(e){} });
@@ -939,6 +1013,10 @@ function renderCasos(main, all){
   const q = state.buscaCaso.trim().toLowerCase();
   let rows = all.slice();
   if(q) rows = rows.filter(r => String(r.idVenda).includes(q) || r.nomeCard.toLowerCase().includes(q) || (r.responsavel||'').toLowerCase().includes(q));
+  // filtro rápido (visão selecionada)
+  if(state.casosView==='pendentes') rows = rows.filter(r=>!r.auditado);
+  else if(state.casosView==='parados7') rows = rows.filter(r=>!r.auditado && diasDesde(r.date)>7);
+  else if(state.casosView==='altoCusto') rows = rows.filter(r=>(r.custo||0)>500);
   rows = sortCasos(rows);
 
   const pend = all.filter(r=>!r.auditado);
@@ -949,11 +1027,20 @@ function renderCasos(main, all){
   const arrow = (k)=> s.key===k ? (s.dir==='asc'?'▲':'▼') : '↕';
   const th = (k,label,num)=>`<th class="${s.key===k?'sortable sorted':'sortable'}${num?' num':''}" data-sort="${k}">${label} <span class="sarrow">${arrow(k)}</span></th>`;
 
+  const views = getViews();
+  const vChip = (k,label)=>`<button class="chip ${state.casosView===k?'on':''}" data-view="${k}">${label}</button>`;
+
   main.innerHTML = `
     <div class="casos-kpis">
       <div class="ck"><div class="ck-l">Pendentes de auditoria</div><div class="ck-v">${pend.length}</div></div>
       <div class="ck ${parados7>0?'warn':''}"><div class="ck-l">Parados há +7 dias</div><div class="ck-v">${parados7}</div></div>
       <div class="ck"><div class="ck-l">Idade média dos pendentes</div><div class="ck-v">${idadeMedia}<span style="font-size:13px;font-weight:600;color:#8A9099"> dias</span></div></div>
+    </div>
+    <div class="chips-bar">
+      ${vChip('todos','Todos')}${vChip('pendentes','Pendentes')}${vChip('parados7','Parados +7d')}${vChip('altoCusto','Alto custo')}
+      ${views.length?'<span class="chip-sep"></span>':''}
+      ${views.map((v,i)=>`<button class="chip" data-savedidx="${i}" title="setor: ${v.setor||'todos'} · linha: ${v.empresa||'todas'} · ${v.casosView||'todos'}">${v.nome} <span class="x" data-delidx="${i}">✕</span></button>`).join('')}
+      <button class="chip chip-add" id="chipSalvar">+ Salvar visão atual</button>
     </div>
     <div class="card">
       <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.</div></div>
@@ -976,6 +1063,9 @@ function renderCasos(main, all){
   `;
 
   document.getElementById('buscaCaso').addEventListener('input', e=>{ const v=e.target.value; state.buscaCaso=v; render(); const el=document.getElementById('buscaCaso'); el.focus(); el.setSelectionRange(v.length,v.length); });
+  document.querySelectorAll('.chip[data-view]').forEach(c=>c.addEventListener('click', ()=>{ state.casosView=c.dataset.view; render(); }));
+  document.querySelectorAll('.chip[data-savedidx]').forEach(c=>c.addEventListener('click', (e)=>{ if(e.target.dataset.delidx!==undefined){ e.stopPropagation(); removerVisao(Number(e.target.dataset.delidx)); return; } aplicarVisao(getViews()[Number(c.dataset.savedidx)]); }));
+  const cs=document.getElementById('chipSalvar'); if(cs) cs.addEventListener('click', salvarVisaoAtual);
   document.querySelectorAll('th.sortable').forEach(thEl=>{ thEl.addEventListener('click', ()=>{ toggleSort(thEl.dataset.sort); render(); }); });
   document.querySelectorAll('.idchip').forEach(el=>{
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
@@ -1236,7 +1326,8 @@ function wireDrawer(r){
     $('btnSalvar').addEventListener('click', async ()=>{
       const fd = new FormData($('formAuditoria'));
       const tipoResolucao = fd.get('tipoResolucao');
-      if(!tipoResolucao){ alert('Selecione o tipo de resolução.'); return; }
+      clearFieldErrs($('formAuditoria'));
+      if(!tipoResolucao){ markFieldErr(selRes, 'Selecione o tipo de resolução'); selRes.focus(); return; }
       const fields = {
         culpaDe: fd.get('culpaDe'), setor: fd.get('setor'), responsavel: fd.get('responsavel'),
         empresa: fd.get('empresa'), tipoProduto: fd.get('tipoProduto'), tipoProblema: fd.get('tipoProblema'),
@@ -1258,6 +1349,7 @@ function wireDrawer(r){
           queFim:fields.queFim, tipoResolucao:fields.tipoResolucao, auditado:true });
         derivarListasDinamicas(); initFilterOptions();
         closeDrawer(false); render();
+        toast('Auditoria salva', true);
         if(!USING_DEMO) setTimeout(()=>{ refreshData(true).catch(()=>{}); }, 1800);
       } catch(err){
         msg.textContent = 'Erro de rede: ' + err.message + ' — confira a conexão e tente de novo.'; btn.disabled = false;
@@ -1430,10 +1522,12 @@ function openNovoCaso(){
     const g = (k)=> String(fd.get(k)||'').trim();
 
     const idVenda = g('idVenda'), nomeCard = g('nomeCard'), descricao = g('descricao'), quemCadastrou = g('quemCadastrou');
-    if(!idVenda || !nomeCard || !descricao || !quemCadastrou){
-      alert('Preencha ID da venda, nome do card, descrição e quem está cadastrando — são obrigatórios.');
-      return;
-    }
+    const formNovo = document.getElementById('formNovo');
+    clearFieldErrs(formNovo);
+    const obrigatorios = [['idVenda','Informe o ID da venda'],['nomeCard','Informe o nome do card'],['descricao','Descreva o erro'],['quemCadastrou','Informe quem está cadastrando']];
+    let primeiroErro = null;
+    obrigatorios.forEach(([n,txt])=>{ const el=formNovo.querySelector('[name="'+n+'"]'); if(el && !el.value.trim()){ markFieldErr(el, txt); if(!primeiroErro) primeiroErro=el; } });
+    if(primeiroErro){ primeiroErro.focus(); return; }
 
     // Considera o caso já auditado quando a classificação mínima foi preenchida.
     const setor = g('setor'), tipoResolucao = g('tipoResolucao');
@@ -1469,6 +1563,7 @@ function openNovoCaso(){
       derivarListasDinamicas(); initFilterOptions();
       state.screen = 'casos';
       close(); render();
+      toast(auditado ? 'Erro registrado e auditado' : 'Erro registrado como pendente', true);
       if(!USING_DEMO) setTimeout(()=>{ refreshData(true).catch(()=>{}); }, 1800);
     } catch(err){
       msg.textContent = 'Erro de rede: ' + err.message + ' — confira a conexão e tente de novo.'; btn.disabled = false;
