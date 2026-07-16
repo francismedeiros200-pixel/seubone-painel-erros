@@ -26,7 +26,7 @@
  * É a forma mais segura de mirar a aba certa. O nome fica só como reserva.
  */
 var SHEET_GID = 396842648;
-var SHEET_NAME = 'Cadastro de erros';
+var SHEET_NAME = 'Respostas do Form';
 
 /**
  * Mapa lógico: chave que o painel usa  →  lista de "pistas" de cabeçalho.
