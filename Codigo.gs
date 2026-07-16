@@ -196,7 +196,7 @@ function doGet() {
         linkPedido:    extractUrl_(descricao),
       });
     }
-    return jsonOut_({ ok: true, rows: rows });
+    return jsonOut_({ ok: true, version: 'status-2026-07', aba: sh.getName(), rows: rows });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err && err.message || err) });
   }
