@@ -156,6 +156,35 @@
   .navbtn:disabled{opacity:.35;cursor:default}
   tbody tr.row-active{background:#FFF7D6 !important;box-shadow:inset 3px 0 0 #FFC400}
   @media (max-width:640px){ .drawer{width:100vw} }
+  /* Command palette (busca global ⌘K / Ctrl+K) */
+  .pal-scrim{position:fixed;inset:0;background:rgba(17,18,20,.35);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:11vh}
+  .palette{background:#fff;width:min(600px,92vw);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column;max-height:72vh}
+  .pal-input{border:0;border-bottom:1px solid #EFF0F3;padding:16px 18px;font-size:16px;outline:none;font-family:inherit;color:#0F1115}
+  .pal-list{overflow-y:auto;padding:6px}
+  .pal-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer}
+  .pal-item.sel{background:#FFF7D6}
+  .pal-item .pid{font-weight:700;font-size:12.5px;color:#3A3F47;min-width:66px}
+  .pal-item .pname{font-weight:600;font-size:13.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pal-item .pmeta{font-size:11.5px;color:#8A9099;white-space:nowrap}
+  .pal-empty{padding:24px;text-align:center;color:#8A9099;font-size:13px}
+  .pal-foot{border-top:1px solid #EFF0F3;padding:8px 14px;font-size:11px;color:#9CA3AF;display:flex;gap:16px}
+  /* Badge de idade do caso */
+  .age{font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .age-old{background:#FCE8E6;color:#A62A23}
+  .age-mid{background:#FFF3CD;color:#8A6A00}
+  .age-ok{background:#EEF0F3;color:#6B7280}
+  /* Cabeçalhos ordenáveis */
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+  th.sortable:hover{color:#0F1115}
+  th .sarrow{color:#C7CBD1;font-size:10px;margin-left:2px}
+  th.sorted .sarrow{color:#0F1115}
+  /* KPIs da tela de casos */
+  .casos-kpis{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .ck{background:#fff;border:1px solid #E6E8EC;border-radius:12px;padding:12px 16px;min-width:150px;flex:1}
+  .ck .ck-l{font-size:11px;color:#8A9099;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .ck .ck-v{font-size:22px;font-weight:800;margin-top:3px}
+  .ck.warn{border-color:#F3C0BB;background:#FEF6F5}
+  .ck.warn .ck-v{color:#A62A23}
   .close-btn{flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E8E9EC;background:#fff;color:#565C64;font-size:15px;cursor:pointer}
   .close-btn:hover{background:#F7F8FA}
   .sec-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#16181D;margin-bottom:12px;display:flex;align-items:center;gap:9px}
@@ -232,6 +261,7 @@
         <select id="fSemana" style="display:none"></select>
         <select id="fSetor"><option value="">Todos os setores</option></select>
         <select id="fEmpresa"><option value="">Todas as linhas</option></select>
+        <button class="btn btn-ghost" id="btnPalette" title="Busca rápida (Ctrl/Cmd + K)" style="gap:7px;color:#6B7280">🔍 Buscar <span style="font-size:10.5px;border:1px solid #E6E8EC;border-radius:5px;padding:1px 5px;color:#9CA3AF">Ctrl K</span></button>
         <button class="iconbtn" id="btnRefresh" title="Atualizar dados da planilha">⟳</button>
         <button class="btn btn-accent" id="btnNovoCaso">+ Novo caso</button>
       </div>
@@ -446,6 +476,7 @@ async function refreshData(silent){
 const state = { screen:'exec', periodoTipo:'relativo', periodo:'Últimos 12 meses', mes:'', semana:'', setor:'', empresa:'', granularidade:'Mensal', buscaCaso:'', semanaReuniao:null };
 let charts = {};
 let CASO_ATUAL = null; // id do caso aberto no drawer lateral (null = fechado)
+state.casosSort = { key:'', dir:'desc' }; // ordenação da tabela de casos ('' = padrão: pendentes primeiro)
 
 function mondayOf(d){ const dt=new Date(d); const day=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-day); dt.setHours(0,0,0,0); return dt; }
 function fmtDM(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
@@ -875,22 +906,65 @@ function renderResp(main, data){
 }
 
 /* ================= CASOS / AUDITORIA ================= */
+function diasDesde(date){ return date ? Math.max(0, Math.floor((Date.now()-date.getTime())/86400000)) : 0; }
+function ageBadge(r){
+  const d = diasDesde(r.date);
+  const cls = r.auditado ? 'age-ok' : (d>7 ? 'age-old' : d>=3 ? 'age-mid' : 'age-ok');
+  return `<span class="age ${cls}">${d}d</span>`;
+}
+function toggleSort(k){
+  const s = state.casosSort;
+  if(s.key===k){ s.dir = s.dir==='asc' ? 'desc' : 'asc'; }
+  else { s.key = k; s.dir = (k==='nome'||k==='setor'||k==='resp') ? 'asc' : 'desc'; }
+}
+function sortCasos(rows){
+  const s = state.casosSort;
+  if(!s.key) return rows.sort((a,b)=> a.auditado===b.auditado ? b.date-a.date : (a.auditado?1:-1));
+  const dir = s.dir==='asc' ? 1 : -1;
+  const val = (r)=>{ switch(s.key){
+    case 'id': return Number(r.idVenda)||0;
+    case 'nome': return (r.nomeCard||'').toLowerCase();
+    case 'data': return r.date.getTime();
+    case 'idade': return diasDesde(r.date);
+    case 'setor': return (r.setor||'').toLowerCase();
+    case 'resp': return (r.responsavel||'').toLowerCase();
+    case 'custo': return (r.custo==null) ? -Infinity : r.custo;
+    case 'status': return r.auditado ? 1 : 0;
+    default: return 0;
+  } };
+  return rows.sort((a,b)=>{ const va=val(a), vb=val(b); if(va<vb) return -dir; if(va>vb) return dir; return b.date-a.date; });
+}
+
 function renderCasos(main, all){
   const q = state.buscaCaso.trim().toLowerCase();
-  let rows = all.slice().sort((a,b)=> a.auditado===b.auditado ? b.date-a.date : (a.auditado?1:-1));
+  let rows = all.slice();
   if(q) rows = rows.filter(r => String(r.idVenda).includes(q) || r.nomeCard.toLowerCase().includes(q) || (r.responsavel||'').toLowerCase().includes(q));
-  const pendentesN = all.filter(r=>!r.auditado).length;
+  rows = sortCasos(rows);
+
+  const pend = all.filter(r=>!r.auditado);
+  const parados7 = pend.filter(r=>diasDesde(r.date)>7).length;
+  const idadeMedia = pend.length ? Math.round(pend.reduce((a,r)=>a+diasDesde(r.date),0)/pend.length) : 0;
+
+  const s = state.casosSort;
+  const arrow = (k)=> s.key===k ? (s.dir==='asc'?'▲':'▼') : '↕';
+  const th = (k,label,num)=>`<th class="${s.key===k?'sortable sorted':'sortable'}${num?' num':''}" data-sort="${k}">${label} <span class="sarrow">${arrow(k)}</span></th>`;
 
   main.innerHTML = `
-    ${pendentesN>0 ? `<div class="banner red"><span class="b-ic">!</span><div><div class="b-title">${pendentesN} caso(s) pendente(s) de auditoria</div><div class="b-text">Clique num caso "Pendente" pra preencher os campos de auditoria.</div></div></div>` : ''}
+    <div class="casos-kpis">
+      <div class="ck"><div class="ck-l">Pendentes de auditoria</div><div class="ck-v">${pend.length}</div></div>
+      <div class="ck ${parados7>0?'warn':''}"><div class="ck-l">Parados há +7 dias</div><div class="ck-v">${parados7}</div></div>
+      <div class="ck"><div class="ck-l">Idade média dos pendentes</div><div class="ck-v">${idadeMedia}<span style="font-size:13px;font-weight:600;color:#8A9099"> dias</span></div></div>
+    </div>
     <div class="card">
-      <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso e auditar (ou revisar).</div></div>
+      <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.</div></div>
         <input class="searchbar" id="buscaCaso" placeholder="Buscar por ID do pedido, cliente ou consultor…" value="${state.buscaCaso}"></div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>ID</th><th>Cliente / Card</th><th>Data</th><th>Setor</th><th>Responsável</th><th class="num">Custo</th><th>Status</th></tr></thead>
+        <thead><tr>${th('id','ID')}${th('nome','Cliente / Card')}${th('data','Data')}${th('idade','Idade')}${th('setor','Setor')}${th('resp','Responsável')}${th('custo','Custo',true)}${th('status','Status')}</tr></thead>
         <tbody>${rows.map(r=>`<tr class="clickable" data-id="${r.id}">
             <td><span class="idchip" data-copy="${r.idVenda}">#${r.idVenda}</span></td>
-            <td style="font-weight:600">${r.nomeCard}</td><td>${fmtDate(r.date)}</td>
+            <td style="font-weight:600">${r.nomeCard}</td>
+            <td>${fmtDate(r.date)}</td>
+            <td>${ageBadge(r)}</td>
             <td>${r.setor ? `<span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:7px"></span>${r.setor}` : '<span style="color:#B9BEC6">—</span>'}</td>
             <td>${r.responsavel || '<span style="color:#B9BEC6">—</span>'}</td>
             <td class="num">${r.custo!==null && r.custo!==undefined ? brl(r.custo) : '<span style="color:#B9BEC6">—</span>'}</td>
@@ -902,6 +976,7 @@ function renderCasos(main, all){
   `;
 
   document.getElementById('buscaCaso').addEventListener('input', e=>{ const v=e.target.value; state.buscaCaso=v; render(); const el=document.getElementById('buscaCaso'); el.focus(); el.setSelectionRange(v.length,v.length); });
+  document.querySelectorAll('th.sortable').forEach(thEl=>{ thEl.addEventListener('click', ()=>{ toggleSort(thEl.dataset.sort); render(); }); });
   document.querySelectorAll('.idchip').forEach(el=>{
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
   });
@@ -1040,9 +1115,11 @@ window.addEventListener('hashchange', syncFromHash);
 /* Navegação por teclado enquanto o drawer está aberto: Esc fecha, ↑/↓ (ou J/K) troca de caso. */
 document.addEventListener('keydown', (e)=>{
   if(CASO_ATUAL===null) return;
+  if(document.getElementById('palScrim')) return; // palette aberta tem prioridade
   if(e.key==='Escape'){ closeDrawer(false); return; }
   const tag=(e.target.tagName||'').toLowerCase();
   if(tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable) return;
+  if(e.ctrlKey||e.metaKey||e.altKey) return; // não conflitar com atalhos (ex: Ctrl+K)
   if(e.key==='ArrowDown'||e.key==='j'||e.key==='J'){ const n=document.getElementById('drwNext'); if(n&&n.dataset.target){ e.preventDefault(); openCaso(Number(n.dataset.target)); } }
   else if(e.key==='ArrowUp'||e.key==='k'||e.key==='K'){ const p=document.getElementById('drwPrev'); if(p&&p.dataset.target){ e.preventDefault(); openCaso(Number(p.dataset.target)); } }
 });
@@ -1188,6 +1265,75 @@ function wireDrawer(r){
     });
   }
 }
+
+/* ================= BUSCA GLOBAL (COMMAND PALETTE · Ctrl/Cmd+K) ================= */
+let PAL_SEL = 0, PAL_RESULTS = [];
+
+function palSearch(q){
+  q = q.trim().toLowerCase();
+  let list = RECORDS.slice();
+  if(q){
+    const terms = q.split(/\s+/);
+    list = list.filter(r=>{
+      const hay = (String(r.idVenda)+' '+(r.nomeCard||'')+' '+(r.empresa||'')+' '+(r.responsavel||'')+' '+(r.setor||'')).toLowerCase();
+      return terms.every(t=>hay.includes(t));
+    });
+  } else {
+    list = list.filter(r=>!r.auditado); // sem busca: mostra os pendentes primeiro
+  }
+  list.sort((a,b)=> a.auditado===b.auditado ? b.date-a.date : (a.auditado?1:-1));
+  return list.slice(0,30);
+}
+
+function renderPalette(q){
+  PAL_RESULTS = palSearch(q); PAL_SEL = 0;
+  const listEl = document.getElementById('palList'); if(!listEl) return;
+  if(!PAL_RESULTS.length){ listEl.innerHTML = `<div class="pal-empty">Nada encontrado${q?` para “${q}”`:''}.</div>`; return; }
+  listEl.innerHTML = PAL_RESULTS.map((r,i)=>`<div class="pal-item ${i===0?'sel':''}" data-idx="${i}">
+    <span class="pid">#${r.idVenda}</span>
+    <span class="pname">${r.nomeCard||'(sem nome)'}</span>
+    <span class="pmeta">${r.empresa||'—'} · ${r.setor||'s/ setor'}</span>
+    <span class="badge ${r.auditado?'pill-green':'pill-red'}" style="font-size:10px">${r.auditado?'Auditado':'Pendente'}</span>
+  </div>`).join('');
+  listEl.querySelectorAll('.pal-item').forEach(it=>{
+    it.addEventListener('click', ()=>palOpen(Number(it.dataset.idx)));
+    it.addEventListener('mousemove', ()=>palSelect(Number(it.dataset.idx)));
+  });
+}
+
+function palSelect(i){ PAL_SEL=i; document.querySelectorAll('.pal-item').forEach((el,idx)=>el.classList.toggle('sel', idx===i)); }
+function palOpen(i){ const r=PAL_RESULTS[i]; if(!r) return; closePalette(); state.screen='casos'; render(); openCaso(r.id); }
+function ensurePalVisible(){ const el=document.querySelectorAll('.pal-item')[PAL_SEL]; if(el) el.scrollIntoView({block:'nearest'}); }
+
+function openPalette(){
+  if(document.getElementById('palScrim')) return;
+  const el = document.createElement('div');
+  el.className = 'pal-scrim'; el.id = 'palScrim';
+  el.innerHTML = `<div class="palette" role="dialog" aria-label="Busca de casos">
+      <input class="pal-input" id="palInput" placeholder="Buscar por ID, cliente, empresa ou responsável…" autocomplete="off" spellcheck="false">
+      <div class="pal-list" id="palList"></div>
+      <div class="pal-foot"><span>↑ ↓ navegar</span><span>↵ abrir</span><span>Esc fechar</span></div>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', (e)=>{ if(e.target.id==='palScrim') closePalette(); });
+  const input = document.getElementById('palInput');
+  input.addEventListener('input', ()=>renderPalette(input.value));
+  input.addEventListener('keydown', (e)=>{
+    if(e.key==='ArrowDown'){ e.preventDefault(); if(PAL_SEL<PAL_RESULTS.length-1){ palSelect(PAL_SEL+1); ensurePalVisible(); } }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); if(PAL_SEL>0){ palSelect(PAL_SEL-1); ensurePalVisible(); } }
+    else if(e.key==='Enter'){ e.preventDefault(); palOpen(PAL_SEL); }
+    else if(e.key==='Escape'){ e.preventDefault(); closePalette(); }
+  });
+  renderPalette('');
+  input.focus();
+}
+function closePalette(){ const el=document.getElementById('palScrim'); if(el) el.remove(); PAL_SEL=0; }
+
+// Atalho global Ctrl/Cmd+K e botão do header
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && (e.key==='k'||e.key==='K')){ e.preventDefault(); document.getElementById('palScrim') ? closePalette() : openPalette(); }
+});
+document.getElementById('btnPalette').addEventListener('click', openPalette);
 
 /* ================= NOVO CASO (registro completo direto pelo painel) ================= */
 function openNovoCaso(){
