@@ -38,7 +38,11 @@
   .brand-badge{width:26px;height:26px;border-radius:7px;background:#FFC400;display:inline-flex;align-items:center;justify-content:center;color:#17181B;font-weight:800;font-size:14px;flex-shrink:0}
   .brand-name{color:#fff;font-weight:700;font-size:15px}
   .brand-name span{color:#9AA0A8;font-weight:600}
-  .nav{padding:12px 10px;flex:1}
+  .side-cta{margin:14px 12px 2px;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border:none;border-radius:10px;background:#FFC400;color:#17181B;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(255,196,0,.22)}
+  .side-cta:hover{background:#FFCF33}
+  .side-cta:active{transform:translateY(1px)}
+  .side-cta .cta-plus{font-size:17px;font-weight:800;line-height:1}
+  .nav{padding:8px 10px 12px;flex:1}
   .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#6E727A;padding:14px 10px 6px;font-weight:700}
   .nav-item{display:flex;align-items:center;gap:12px;padding:9px 11px;border-radius:9px;font-size:13.5px;cursor:pointer;margin-bottom:3px;color:#AEB2B9;font-weight:500}
   .nav-item .ic{width:18px;text-align:center;font-size:14px;flex-shrink:0}
@@ -59,6 +63,29 @@
   .src-badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
   .src-live{background:#E8F4EC;color:#15703D}
   .src-demo{background:#FFF7DB;color:#8A6A00}
+  .demo-strip{background:#FFF3CD;border:1px solid #F2D98A;color:#8A6A00;border-radius:10px;padding:10px 14px;margin:0 0 16px;font-size:13px}
+
+  /* ===== Login ===== */
+  .login-scrim{position:fixed;inset:0;z-index:500;background:#0E0F12;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-card{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:34px 30px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+  .login-brand .bb{width:38px;height:38px;border-radius:10px;background:#FFC400;color:#17181B;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:19px}
+  .login-brand b{font-size:17px;font-weight:800}
+  .login-card h2{font-size:20px;font-weight:800;margin-bottom:4px}
+  .login-card .lsub{font-size:13px;color:#8A9099;margin-bottom:20px}
+  .login-card label{display:block;font-size:12.5px;font-weight:600;color:#565C64;margin:0 0 6px}
+  .login-card input{width:100%;padding:11px 13px;border:1px solid #DEE1E6;border-radius:10px;font-size:14px;margin-bottom:14px;font-family:inherit}
+  .login-card input:focus{outline:none;border-color:#FFC400;box-shadow:0 0 0 3px #FFF3CD}
+  .login-card .btn-login{width:100%;padding:12px;border:none;border-radius:10px;background:#17181B;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer}
+  .login-card .btn-login:hover{background:#000}
+  .login-card .btn-login:disabled{opacity:.6;cursor:default}
+  .login-err{background:#FDECEA;color:#A62A23;border-radius:9px;padding:9px 12px;font-size:12.5px;margin-bottom:14px;display:none}
+  .login-hint{margin-top:16px;font-size:11.5px;color:#9CA3AF;line-height:1.5;border-top:1px solid #F0F1F3;padding-top:12px}
+  /* rodapé de usuário logado */
+  .side-role{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 7px;border-radius:6px;background:#EEF0F3;color:#565C64;margin-top:2px}
+  .side-logout{margin-left:auto;background:none;border:none;color:#8A9099;cursor:pointer;font-size:15px;padding:4px}
+  .side-logout:hover{color:#C63A32}
+  .setup-warn{background:#FDECEA;border:1px solid #F3C6C1;color:#A62A23;border-radius:10px;padding:10px 14px;margin:0 0 16px;font-size:13px}
 
   main{padding:24px 26px 56px;max-width:1320px;width:100%;margin:0 auto}
 
@@ -106,6 +133,33 @@
   .pill-red{background:#FBEBEA;color:#A62A23}
   .pill-amber{background:#FFF7DB;color:#8A6A00}
   .pill-grey{background:#EEF0F3;color:#565C64}
+
+  /* Cards de métrica unificados (Visão Executiva) */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:13px;margin-bottom:14px}
+  .metric{background:#fff;border:1px solid #E8E9EC;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column}
+  .metric .m-top{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+  .metric .m-ic{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;background:#EEF0F3;color:#565C64}
+  .metric .m-label{font-size:12px;color:#6A7079;font-weight:600;line-height:1.3}
+  .metric .m-value{font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+  .metric .m-value.sm{font-size:18px;line-height:1.25;letter-spacing:0}
+  .metric .m-foot{font-size:11.5px;color:#8A9099;margin-top:auto;padding-top:9px;line-height:1.4}
+  .m-ic.ic-blue{background:#EAF1FE;color:#2A6FDB}
+  .m-ic.ic-amber{background:#FFF4D1;color:#B47E00}
+  .m-ic.ic-red{background:#FBE9E7;color:#C63A32}
+  .m-ic.ic-slate{background:#EEF0F3;color:#565C64}
+  .m-ic.ic-green{background:#E7F5EC;color:#15843F}
+  .metric.hero{background:#17181B;border-color:#17181B}
+  .metric.hero .m-label{color:#B9BCC2}
+  .metric.hero .m-value{color:#fff}
+  .metric.hero .m-foot{color:#FFC400;font-weight:600}
+  .metric.hero .m-ic{background:#FFC400;color:#17181B}
+  .metric.danger{border-left:3px solid #C63A32}
+  .metric.danger .m-value{color:#A62A23}
+  /* Barra de proporção inline (tabelas de ranking) */
+  .mbar{display:flex;align-items:center;gap:9px;min-width:132px}
+  .mbar .track{flex:1;height:6px;background:#EEF0F3;border-radius:4px;overflow:hidden}
+  .mbar .fill{height:100%;border-radius:4px;min-width:2px}
+  .mbar .val{font-size:12.5px;font-variant-numeric:tabular-nums;color:#3A3F47;font-weight:600;white-space:nowrap}
 
   .seg{display:flex;border:1px solid #E2E4E8;border-radius:8px;overflow:hidden}
   .seg button{border:none;background:#fff;color:#565C64;font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer;font-family:inherit}
@@ -271,17 +325,230 @@
   .logica-box{margin-top:8px;font-size:12px;color:#565C64;background:#F7F8FA;border:1px dashed #D8DBE0;border-radius:9px;padding:9px 11px}
   .save-msg{font-size:12px;color:#8A9099}
 
+  /* ===== Foto do caso (miniaturas + upload no formulário) ===== */
+  .thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid #E2E4E8;background:#F1F2F5;display:block}
+  .thumb-sm{width:42px;height:42px;border-radius:7px;object-fit:cover;border:1px solid #E2E4E8;background:#F1F2F5}
+  .foto-drop{border:1.5px dashed #CDD1D8;border-radius:11px;padding:16px;text-align:center;cursor:pointer;color:#6B7280;font-size:13px;background:#FAFBFC}
+  .foto-drop:hover{border-color:#FFC400;background:#FFFDF3}
+  .foto-drop b{color:#16181D}
+  .foto-prev{display:flex;flex-wrap:wrap;gap:9px;margin-top:11px}
+  .foto-prev .fp{position:relative;width:78px;height:78px}
+  .foto-prev .fp img{width:100%;height:100%;object-fit:cover;border-radius:9px;border:1px solid #E2E4E8}
+  .foto-prev .fp .rm{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:#17181B;color:#fff;border:2px solid #fff;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .setor-destaque{background:#FFFDF3;border:1px solid #F2E4A8;border-radius:11px;padding:13px 14px}
+  .setor-destaque label{color:#8A6A00;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  /* ===== Modo Apresentação (Reunião de Vendas · tela cheia) ===== */
+  .present{position:fixed;inset:0;z-index:400;background:#0E0F12;color:#fff;display:flex;flex-direction:column;font-family:inherit}
+  .present-top{display:flex;align-items:center;gap:14px;padding:15px 26px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .present-top .pt-badge{width:28px;height:28px;border-radius:8px;background:#FFC400;color:#17181B;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .present-top .pt-brand{font-weight:800;font-size:15px}
+  .present-top .pt-brand span{color:#9AA0A8;font-weight:600}
+  .present-top .pt-spacer{flex:1}
+  .present-top .pt-meta{font-size:13px;color:#9AA0A8;font-weight:600}
+  .present-x{width:36px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;cursor:pointer;font-size:15px}
+  .present-x:hover{background:rgba(255,255,255,.1)}
+  .slide{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:22px 6vw 82px;overflow-y:auto}
+  .slide-inner{width:100%;max-width:1140px;margin:auto}
+  .sl-kicker{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:#FFC400}
+  .sl-title{font-size:46px;font-weight:800;line-height:1.04;letter-spacing:-1.2px;margin-top:14px}
+  .sl-sub{font-size:18px;color:#B9BCC2;margin-top:16px;line-height:1.5}
+  .sl-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:10px}
+  .sl-kpi{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px}
+  .sl-kpi .k-l{font-size:14px;color:#9AA0A8;font-weight:600}
+  .sl-kpi .k-v{font-size:44px;font-weight:800;margin-top:10px;line-height:1;font-variant-numeric:tabular-nums}
+  .sl-kpi .k-f{font-size:13.5px;margin-top:12px;font-weight:600;color:#B9BCC2}
+  .present-rank{margin-top:22px;display:flex;flex-direction:column}
+  .present-rank .pr-row{display:flex;align-items:center;gap:16px;padding:15px 4px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .present-rank .pr-rk{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);color:#fff;font-weight:800;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .present-rank .pr-rk.top{background:#FFC400;color:#17181B}
+  .present-rank .pr-name{font-size:21px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .present-rank .pr-track{flex:1.3;height:9px;background:rgba(255,255,255,.09);border-radius:5px;overflow:hidden;max-width:360px}
+  .present-rank .pr-fill{height:100%;border-radius:5px}
+  .present-rank .pr-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;min-width:120px;text-align:right}
+  .present-rank .pr-sub{font-size:13px;color:#9AA0A8;min-width:82px;text-align:right}
+  /* slide de caso individual */
+  .case-slide{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:center}
+  .case-photo{background:#17181B;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
+  .case-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .case-photo .noimg{color:#5B606A;font-size:15px;text-align:center;padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center}
+  .case-photo .noimg .ic{font-size:44px;opacity:.6}
+  .case-thumbs{display:flex;gap:9px;margin-top:11px}
+  .case-thumbs img{width:66px;height:66px;object-fit:cover;border-radius:9px;border:1px solid rgba(255,255,255,.12);cursor:pointer}
+  .case-thumbs img.on{border-color:#FFC400}
+  .ci-cause{font-size:34px;font-weight:800;line-height:1.1;letter-spacing:-.5px}
+  .ci-client{font-size:16px;color:#9AA0A8;margin-top:8px}
+  .ci-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .ci-tag{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 13px;font-size:14px}
+  .ci-tag span{color:#9AA0A8}.ci-tag b{color:#fff;font-weight:700}
+  .ci-cost{font-size:38px;font-weight:800;color:#FFC400;margin-top:22px;font-variant-numeric:tabular-nums}
+  .ci-cost small{font-size:15px;color:#9AA0A8;font-weight:600}
+  .ci-desc{font-size:14.5px;color:#C7CBD1;line-height:1.55;margin-top:16px;max-height:150px;overflow:auto;border-left:2px solid rgba(255,255,255,.14);padding-left:14px}
+  .present-nav{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:18px;padding:16px}
+  .pn-btn{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .pn-btn:hover{background:rgba(255,255,255,.16)}
+  .pn-btn:disabled{opacity:.25;cursor:default}
+  .pn-count{font-size:12.5px;color:#9AA0A8;font-variant-numeric:tabular-nums;min-width:54px;text-align:center}
+  .present-dots{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:60vw}
+  .present-dots .d{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);cursor:pointer;transition:width .15s}
+  .present-dots .d.on{background:#FFC400;width:22px;border-radius:5px}
+  .btn-present{background:#17181B;color:#fff;display:inline-flex;align-items:center;gap:9px}
+  .btn-present:hover{background:#000}
+  @media (max-width:820px){ .case-slide{grid-template-columns:1fr;gap:20px} .sl-title{font-size:32px} .ci-cause{font-size:26px} .present-rank .pr-name{font-size:17px} .present-rank .pr-track{display:none} }
+
   @media (max-width:900px){
     .sidebar{width:62px}
     .brand-name,.nav-label,.nav-item span:not(.ic-badge){display:none}
+    .side-cta{margin:12px 9px 2px;padding:11px 0}
+    .side-cta .cta-label{display:none}
     .sidebar-foot span{display:none}
     main{padding:18px 14px 40px}
   }
+
+  /* =========================================================
+     TEMA ESCURO — override para ornar com o shell da plataforma.
+     A base clara acima fica intacta; aqui só remapeamos superfícies,
+     bordas e textos quando <html data-theme="dark">.
+     ========================================================= */
+  html[data-theme="dark"] body{background:#0E0F13;color:#E7E9EC}
+  html[data-theme="dark"] ::selection{background:#5a4a00;color:#fff}
+  html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#33373E;border-color:#0E0F13}
+  /* superfícies */
+  html[data-theme="dark"] header{background:#141519;border-bottom-color:rgba(255,255,255,.08)}
+  html[data-theme="dark"] main .card,
+  html[data-theme="dark"] .stat,
+  html[data-theme="dark"] .metric,
+  html[data-theme="dark"] .ck,
+  html[data-theme="dark"] .kpi-accent,
+  html[data-theme="dark"] .kpi-red{background:#191A1F;border-color:rgba(255,255,255,.08)}
+  html[data-theme="dark"] .kpi-dark,
+  html[data-theme="dark"] .metric.hero{background:#1F2126;border-color:rgba(255,255,255,.09)}
+  html[data-theme="dark"] .modal,
+  html[data-theme="dark"] .drawer,
+  html[data-theme="dark"] .palette,
+  html[data-theme="dark"] .login-card,
+  html[data-theme="dark"] .modal-foot,
+  html[data-theme="dark"] .drawer-foot{background:#191A1F;color:#E7E9EC}
+  html[data-theme="dark"] .login-scrim{background:#08090B}
+  /* textos suaves */
+  html[data-theme="dark"] .card .card-sub,
+  html[data-theme="dark"] .stat .s-label,html[data-theme="dark"] .stat .s-foot,
+  html[data-theme="dark"] header .sub,
+  html[data-theme="dark"] .metric .m-label,html[data-theme="dark"] .metric .m-foot,
+  html[data-theme="dark"] .kpi-accent .k-label,html[data-theme="dark"] .kpi-accent .k-foot,
+  html[data-theme="dark"] .kpi-red .k-label,html[data-theme="dark"] .kpi-red .k-foot,
+  html[data-theme="dark"] .ck .ck-l,
+  html[data-theme="dark"] thead th,
+  html[data-theme="dark"] .login-card .lsub,html[data-theme="dark"] .login-card label,
+  html[data-theme="dark"] .save-msg,html[data-theme="dark"] .hist-meta,html[data-theme="dark"] .hist-empty,
+  html[data-theme="dark"] .pal-item .pmeta,html[data-theme="dark"] .empty .e-sub{color:#9198A2}
+  html[data-theme="dark"] .field label{color:#8A9099}
+  html[data-theme="dark"] .sec-title,html[data-theme="dark"] .hist-line,
+  html[data-theme="dark"] .card h3,html[data-theme="dark"] .login-card h2,
+  html[data-theme="dark"] header h1{color:#E7E9EC}
+  /* inputs / selects / botões neutros */
+  html[data-theme="dark"] .filters select,html[data-theme="dark"] .filters input,
+  html[data-theme="dark"] .iconbtn,html[data-theme="dark"] .searchbar,
+  html[data-theme="dark"] .field input,html[data-theme="dark"] .field select,html[data-theme="dark"] .field textarea,
+  html[data-theme="dark"] .login-card input,
+  html[data-theme="dark"] .navbtn,html[data-theme="dark"] .close-btn,
+  html[data-theme="dark"] .btn-ghost,html[data-theme="dark"] .stbtn,
+  html[data-theme="dark"] .seg,html[data-theme="dark"] .seg-toggle,html[data-theme="dark"] .seg button,
+  html[data-theme="dark"] .seg-toggle .seg,html[data-theme="dark"] .chip,
+  html[data-theme="dark"] .idchip,html[data-theme="dark"] .pal-input{background:#212228;border-color:rgba(255,255,255,.12);color:#E7E9EC}
+  html[data-theme="dark"] .iconbtn:hover,html[data-theme="dark"] .btn-ghost:hover,
+  html[data-theme="dark"] .navbtn:hover,html[data-theme="dark"] .chip:hover{background:#2A2C33;border-color:rgba(255,255,255,.22)}
+  html[data-theme="dark"] .field input:focus,html[data-theme="dark"] .login-card input:focus{border-color:#FFC400;box-shadow:0 0 0 3px rgba(255,196,0,.18)}
+  /* botões escuros → superfície clara p/ não sumir no fundo escuro */
+  html[data-theme="dark"] .btn-primary{background:#2E3138;color:#fff}
+  html[data-theme="dark"] .btn-primary:hover{background:#3A3E46}
+  html[data-theme="dark"] .btn-login{background:#2E3138}
+  html[data-theme="dark"] .btn-login:hover{background:#3A3E46}
+  /* estados "selecionados" (eram #17181B) → neutro claro legível */
+  html[data-theme="dark"] .chip.on,
+  html[data-theme="dark"] .seg button.active,
+  html[data-theme="dark"] .seg-toggle .seg.on,
+  html[data-theme="dark"] .stbtn.on{background:#3A3E46;border-color:#3A3E46;color:#fff}
+  html[data-theme="dark"] .rank{background:#2A2C33;color:#AEB4BD}
+  html[data-theme="dark"] .rank.top{background:#FFC400;color:#17181B}
+  /* tabelas */
+  html[data-theme="dark"] thead th{border-bottom-color:rgba(255,255,255,.1)}
+  html[data-theme="dark"] tbody td{border-bottom-color:rgba(255,255,255,.06)}
+  html[data-theme="dark"] tbody tr.clickable:hover{background:rgba(255,255,255,.04)}
+  html[data-theme="dark"] tbody tr.row-active{background:rgba(255,196,0,.1) !important}
+  html[data-theme="dark"] tbody tr.sel-row,html[data-theme="dark"] .pal-item.sel{background:rgba(255,196,0,.1)}
+  /* divisórias diversas */
+  html[data-theme="dark"] .legend-row,html[data-theme="dark"] .modal-head,html[data-theme="dark"] .modal-foot,
+  html[data-theme="dark"] .drawer-head,html[data-theme="dark"] .drawer-foot,html[data-theme="dark"] .pal-input,
+  html[data-theme="dark"] .pal-foot,html[data-theme="dark"] .login-hint{border-color:rgba(255,255,255,.09)}
+  html[data-theme="dark"] .hist-item:not(:last-child)::before,html[data-theme="dark"] .th-sep{background:rgba(255,255,255,.12)}
+  /* blocos de leitura / dashed */
+  html[data-theme="dark"] .readonly-block,html[data-theme="dark"] .logica-box,
+  html[data-theme="dark"] .foto-drop{background:#212228;color:#C9CDD4;border-color:rgba(255,255,255,.14)}
+  html[data-theme="dark"] .kcol{background:#161418;border-color:rgba(255,255,255,.08)}
+  html[data-theme="dark"] .kcol-head{color:#E7E9EC;border-bottom-color:rgba(255,255,255,.08)}
+  html[data-theme="dark"] .kcol-head .kc-count{background:#2A2C33;color:#C9CDD4}
+  html[data-theme="dark"] .kcard{background:#212228;border-color:rgba(255,255,255,.1)}
+  html[data-theme="dark"] .kcol-empty{border-color:rgba(255,255,255,.14);color:#6C7178}
+  html[data-theme="dark"] .kcard .kc-name{color:#E7E9EC}
+  /* pílulas / badges pastéis → versões translúcidas p/ fundo escuro */
+  html[data-theme="dark"] .pill-green,html[data-theme="dark"] .src-live{background:rgba(46,160,90,.16);color:#7DDBA3}
+  html[data-theme="dark"] .pill-red,html[data-theme="dark"] .age-old{background:rgba(214,74,66,.18);color:#F19992}
+  html[data-theme="dark"] .pill-amber,html[data-theme="dark"] .src-demo,html[data-theme="dark"] .age-mid{background:rgba(255,196,0,.16);color:#FFD65A}
+  html[data-theme="dark"] .pill-grey,html[data-theme="dark"] .age-ok,html[data-theme="dark"] .side-role{background:rgba(255,255,255,.09);color:#AEB4BD}
+  html[data-theme="dark"] .banner{background:rgba(255,196,0,.09);border-color:rgba(255,196,0,.22)}
+  html[data-theme="dark"] .banner .b-title{color:#FFD65A}
+  html[data-theme="dark"] .banner .b-text{color:#C9CDD4}
+  html[data-theme="dark"] .banner.red{background:rgba(214,74,66,.1);border-color:rgba(214,74,66,.28)}
+  html[data-theme="dark"] .banner.red .b-title{color:#F19992}
+  html[data-theme="dark"] .banner.red .b-text{color:#D9BBB8}
+  html[data-theme="dark"] .demo-strip,html[data-theme="dark"] .setup-warn{background:rgba(255,196,0,.1);border-color:rgba(255,196,0,.24);color:#FFD65A}
+  html[data-theme="dark"] .m-ic{background:#2A2C33;color:#AEB4BD}
+  html[data-theme="dark"] .setor-destaque{background:rgba(255,196,0,.08);border-color:rgba(255,196,0,.22)}
+  html[data-theme="dark"] .setor-destaque label{color:#FFD65A}
+  html[data-theme="dark"] .mbar .track,html[data-theme="dark"] .skl{background:#26282E}
+  html[data-theme="dark"] .mbar .val{color:#C9CDD4}
+  html[data-theme="dark"] .spinner{border-color:#26282E;border-top-color:#FFC400}
+  html[data-theme="dark"] .thumb,html[data-theme="dark"] .thumb-sm{background:#26282E;border-color:rgba(255,255,255,.14)}
+  html[data-theme="dark"] .login-err{background:rgba(214,74,66,.14);color:#F19992}
+  html[data-theme="dark"] .ck.warn{background:rgba(214,74,66,.1);border-color:rgba(214,74,66,.28)}
+
+  /* =========================================================
+     BOTÃO DE TEMA (claro/escuro)
+     ========================================================= */
+  #btnTheme{font-size:15px}
+
+  /* =========================================================
+     MODO EMBUTIDO — quando o painel roda dentro do shell da
+     plataforma (?embed=1). Some a sidebar e o cabeçalho de
+     identidade próprios; mantém só a barra funcional de filtros.
+     ========================================================= */
+  body.embed .sidebar{display:none}
+  body.embed .content{min-height:100vh}
+  body.embed header{position:static;background:transparent;border-bottom:0;padding:16px 26px 4px}
+  body.embed header .htitle{display:none}      /* título/subtítulo: o shell já dá o contexto */
+  body.embed #btnNovoCasoTop{display:inline-flex} /* + Novo caso vem pra barra de filtros */
+  body.embed main{padding-top:14px}
+  #btnNovoCasoTop{display:none}
 </style>
 </head>
 <body>
+<script>
+/* Tema aplicado o mais cedo possível (evita flash). Padrão: escuro, p/ ornar
+   com a plataforma. Aceita ?theme=light|dark e ?embed=1 (dentro do shell). */
+(function(){
+  try{
+    var p = new URLSearchParams(location.search);
+    var t = p.get('theme') || localStorage.getItem('seubone_theme') || 'dark';
+    if(t!=='light' && t!=='dark') t='dark';
+    document.documentElement.setAttribute('data-theme', t);
+    if(p.get('embed')==='1' || p.get('embed')==='true') document.body.classList.add('embed');
+  }catch(e){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
 
 <div id="bootScreen" class="boot"><div class="spinner"></div><div id="bootMsg">Carregando dados…</div></div>
+<div id="loginRoot"></div>
 
 <div class="layout" id="appRoot" style="display:none">
 
@@ -290,6 +557,7 @@
       <span class="brand-badge">E</span>
       <span class="brand-name">SeuBoné <span>· Erros</span></span>
     </div>
+    <button class="side-cta" id="btnNovoCaso" title="Registrar novo erro"><span class="cta-plus">+</span><span class="cta-label">Novo caso</span></button>
     <nav class="nav">
       <div class="nav-label">Análise</div>
       <div class="nav-item active" data-screen="exec"><span class="ic">▦</span><span>Visão Executiva</span></div>
@@ -298,21 +566,23 @@
       <div class="nav-label">Operação</div>
       <div class="nav-item" data-screen="casos"><span class="ic">≡</span><span>Casos / Auditoria</span><span class="ic-badge" id="navBadge">0</span></div>
       <div class="nav-label">Apresentação</div>
-      <div class="nav-item" data-screen="reuniao"><span class="ic">◧</span><span>Reunião Semanal · Escritório</span></div>
+      <div class="nav-item" data-screen="reuniao"><span class="ic">◧</span><span>Reunião de Vendas</span></div>
     </nav>
-    <div class="sidebar-foot" id="sideUser" title="Clique para definir seu nome (aparece no histórico dos casos)" style="cursor:pointer">
+    <div class="sidebar-foot" id="sideUser">
       <span class="avatar" id="sideAvatar">?</span>
-      <span><span id="sideNome">Definir seu nome</span><br><span style="color:#565C64" id="sideFoot">carregando…</span></span>
+      <span style="min-width:0"><span id="sideNome">—</span><br><span class="side-role" id="sideRole" style="display:none"></span><span style="color:#565C64" id="sideFoot">carregando…</span></span>
+      <button class="side-logout" id="btnLogout" title="Sair" style="display:none">⏻</button>
     </div>
   </aside>
 
   <div class="content">
     <header>
-      <div>
+      <div class="htitle">
         <h1 id="pageTitle">Visão Executiva</h1>
         <div class="sub"><span id="pageSub"></span><span class="src-badge" id="srcBadge"></span></div>
       </div>
       <div class="filters">
+        <button class="btn btn-accent" id="btnNovoCasoTop" title="Registrar novo erro">+ Novo caso</button>
         <select id="fPeriodoTipo">
           <option value="relativo">Período relativo</option>
           <option value="mes">Mês específico</option>
@@ -328,11 +598,12 @@
         <select id="fSetor"><option value="">Todos os setores</option></select>
         <select id="fEmpresa"><option value="">Todas as linhas</option></select>
         <button class="btn btn-ghost" id="btnPalette" title="Busca rápida (Ctrl/Cmd + K)" style="gap:7px;color:#6B7280">🔍 Buscar <span style="font-size:10.5px;border:1px solid #E6E8EC;border-radius:5px;padding:1px 5px;color:#9CA3AF">Ctrl K</span></button>
+        <button class="iconbtn" id="btnTheme" title="Alternar tema claro/escuro">☾</button>
         <button class="iconbtn" id="btnRefresh" title="Atualizar dados da planilha">⟳</button>
-        <button class="btn btn-accent" id="btnNovoCaso">+ Novo caso</button>
       </div>
     </header>
 
+    <div id="demoBanner"></div>
     <main id="main"></main>
   </div>
 </div>
@@ -344,7 +615,7 @@
 const CONFIG = {
   // Cole aqui a URL do Apps Script depois de implantar (termina em /exec).
   // Deixando em branco, o painel roda em modo demonstração com dados fictícios.
-  API_URL: 'https://script.google.com/macros/s/AKfycbyx7XkXYTn9p6ArfBww6sNPm73Tuk05YyRoVfftvUTLH-7cKOPjeg0zSNKiD-V1a9LYHw/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbxio6By28Rce2Df1fdbPZ15FRUcPA_Q-qt6iVWGg1LB6noB3JXM2l_YompvK4jBKK4LMg/exec',
 };
 
 /* ================= CORES E TABELA DE RESOLUÇÃO ================= */
@@ -358,6 +629,167 @@ function colorForSetor(s){
 }
 
 const SETORES_PADRAO = ['Vendas','Fábrica','Dupla (Vendedor e Designer)','Escritório'];
+// Setores que interessam para a Reunião de Vendas (vendedor envolvido).
+const SETORES_VENDAS = ['Vendas','Dupla (Vendedor e Designer)'];
+// Opções do campo único "Setor do problema" (absorve o antigo "Culpa de", por isso inclui "Cliente").
+const SETOR_OPCOES = ['Vendas','Fábrica','Dupla (Vendedor e Designer)','Escritório','Cliente'];
+
+/** Escapa texto para inserir com segurança em HTML (evita XSS via campos do usuário). */
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ================= LOGIN E PERMISSÕES (controle de acesso na interface) ================= */
+const LS_SESSION = 'seubone_session';
+let SESSION = null;    // {login, nome, papel}
+let USUARIOS = [];     // carregado da planilha (aba Usuarios) ou dos demo abaixo
+
+// Usuários de demonstração (quando não há planilha real). login = senha = papel.
+const DEMO_USUARIOS = [
+  { nome:'Gestor Demo',      login:'gestor',      papel:'gestor',      senha:'gestor' },
+  { nome:'Auditor Demo',     login:'auditor',     papel:'auditor',     senha:'auditor' },
+  { nome:'Colaborador Demo', login:'colaborador', papel:'colaborador', senha:'colaborador' },
+  { nome:'Dev Demo',         login:'dev',         papel:'dev',         senha:'dev' },
+];
+
+// Matriz de permissões por papel.
+const PAPEIS = {
+  gestor:      { label:'Gestor',      screens:['exec','causas','resp','casos','reuniao'], registrar:true, auditar:true },
+  dev:         { label:'Dev',         screens:['exec','causas','resp','casos','reuniao'], registrar:true, auditar:true },
+  auditor:     { label:'Auditor',     screens:['exec','causas','resp','casos','reuniao'], registrar:true, auditar:true },
+  colaborador: { label:'Colaborador', screens:['causas','casos'],                         registrar:true, auditar:false },
+};
+function papelDef(){ return PAPEIS[SESSION && SESSION.papel] || PAPEIS.colaborador; }
+function loginAtivo(){ return USUARIOS.length > 0; }           // sem usuários cadastrados → modo aberto (retrocompatível)
+function podeVerTela(scr){ return !loginAtivo() || papelDef().screens.includes(scr); }
+function podeAuditar(){ return !loginAtivo() || papelDef().auditar; }
+function podeRegistrar(){ return !loginAtivo() || papelDef().registrar; }
+function telaInicialPapel(){ const s=papelDef().screens; return s.includes('exec') ? 'exec' : (s[0]||'casos'); }
+
+/** SHA-256 hex de (salt + senha), idêntico ao backend (SENHA_SALT). */
+async function hashSenha(senha){
+  const txt = 'seubone::v1::' + senha;
+  try{
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return 'nohash:'+txt; } // contexto inseguro (file:// antigo) — só afeta teste local
+}
+
+async function loadUsuarios(){
+  if(USING_DEMO){ USUARIOS = DEMO_USUARIOS.slice(); return; }
+  if(!CONFIG.API_URL){ USUARIOS = []; return; }
+  try{
+    const res = await fetch(CONFIG.API_URL + '?action=usuarios');
+    const json = await res.json();
+    USUARIOS = (json && json.ok && Array.isArray(json.usuarios)) ? json.usuarios.filter(u=>u.ativo!==false) : [];
+  }catch(e){ USUARIOS = []; }
+}
+
+function loadSession(){ try{ return JSON.parse(localStorage.getItem(LS_SESSION)||'null'); }catch(e){ return null; } }
+function saveSession(s){ try{ localStorage.setItem(LS_SESSION, JSON.stringify(s)); }catch(e){} }
+function logout(){ try{ localStorage.removeItem(LS_SESSION); }catch(e){} SESSION=null; location.reload(); }
+
+async function tentarLogin(login, senha){
+  login = String(login||'').trim().toLowerCase();
+  if(!login) return { ok:false, err:'Informe o usuário.' };
+  const u = USUARIOS.find(x=>String(x.login).toLowerCase()===login);
+  if(!u) return { ok:false, err:'Usuário não encontrado.' };
+  let ok;
+  if(u.senha!==undefined) ok = (String(senha)===String(u.senha));   // demo (texto puro)
+  else ok = ((await hashSenha(senha))===String(u.hash||'').toLowerCase());
+  if(!ok) return { ok:false, err:'Senha incorreta.' };
+  const papel = PAPEIS[u.papel] ? u.papel : 'colaborador';
+  return { ok:true, session:{ login:u.login, nome:u.nome||u.login, papel } };
+}
+
+function mostrarLogin(){
+  const root = document.getElementById('loginRoot');
+  root.innerHTML = `<div class="login-scrim"><div class="login-card">
+      <div class="login-brand"><span class="bb">E</span><b>SeuBoné <span style="color:#8A9099;font-weight:600">· Erros</span></b></div>
+      <h2>Entrar</h2><div class="lsub">Acesse com seu usuário e senha para continuar.</div>
+      <div class="login-err" id="loginErr"></div>
+      <form id="loginForm" autocomplete="on">
+        <label>Usuário</label><input id="loginUser" autocomplete="username" autofocus>
+        <label>Senha</label><input id="loginPass" type="password" autocomplete="current-password">
+        <button class="btn-login" id="loginBtn" type="submit">Entrar</button>
+      </form>
+      ${USING_DEMO ? `<div class="login-hint"><b>Modo demonstração</b> — teste os papéis com usuário = senha = <b>gestor</b>, <b>auditor</b>, <b>colaborador</b> ou <b>dev</b>.</div>` : ''}
+    </div></div>`;
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn=document.getElementById('loginBtn'), errEl=document.getElementById('loginErr');
+    btn.disabled=true; errEl.style.display='none';
+    const r = await tentarLogin(document.getElementById('loginUser').value, document.getElementById('loginPass').value);
+    if(r.ok){ SESSION=r.session; saveSession(SESSION); root.innerHTML=''; mostrarApp(); }
+    else { errEl.textContent=r.err; errEl.style.display='block'; btn.disabled=false; document.getElementById('loginPass').select(); }
+  });
+}
+
+/** Mostra o app já com as permissões do papel aplicadas. */
+function mostrarApp(){
+  document.getElementById('appRoot').style.display='flex';
+  aplicarPermissoesNav();
+  updateSideUser();
+  if(!podeVerTela(state.screen)) state.screen = telaInicialPapel();
+  render();
+  syncFromHash();
+}
+
+/** Esconde da navegação as telas que o papel não pode ver (e o botão de registro, se for o caso). */
+function aplicarPermissoesNav(){
+  document.querySelectorAll('.nav-item').forEach(el=>{ el.style.display = podeVerTela(el.dataset.screen) ? '' : 'none'; });
+  const nc=document.getElementById('btnNovoCaso'); if(nc) nc.style.display = podeRegistrar() ? '' : 'none';
+  // esconde rótulos de seção que ficaram sem itens visíveis
+  document.querySelectorAll('.nav-label').forEach(lbl=>{
+    let el=lbl.nextElementSibling, algum=false;
+    while(el && !el.classList.contains('nav-label')){ if(el.classList.contains('nav-item') && el.style.display!=='none') algum=true; el=el.nextElementSibling; }
+    lbl.style.display = algum ? '' : 'none';
+  });
+}
+
+/* ===== Fotos do caso =====
+ * O backend guarda 0+ links (separados por vírgula/quebra) numa coluna "Foto".
+ * Podem ser links do Google Drive OU URLs diretas de imagem OU data URLs (demo). */
+function parseFotos(v){
+  // Separa múltiplos links. Cuidado: data URLs ("data:...;base64,...") contêm uma vírgula
+  // interna, então uma linha que começa com "data:" é mantida inteira; as demais (links do
+  // Drive/URLs diretas) podem estar separadas por vírgula ou quebra de linha.
+  return String(v||'')
+    .split(/\n+/)
+    .flatMap(line => /^\s*data:/.test(line) ? [line.trim()] : line.split(',').map(s=>s.trim()))
+    .filter(Boolean);
+}
+function fotoSrc(u){
+  u = String(u||'');
+  if(/^data:|^blob:/.test(u)) return u;                    // imagem embutida (demo/preview)
+  if(/drive\.google|docs\.google|googleusercontent/.test(u)){
+    const m = u.match(/[-\w]{25,}/);                        // ID do arquivo do Drive
+    if(m) return 'https://drive.google.com/thumbnail?id='+m[0]+'&sz=w1600';
+  }
+  return u;                                                 // URL direta de imagem
+}
+/** Lê um File de imagem, redimensiona (máx ~1280px) e devolve um JPEG data URL leve.
+ *  Comprimir no navegador evita estourar o limite do POST/Apps Script. */
+function comprimirImagem(file, maxDim=1280, quality=0.82){
+  return new Promise((resolve, reject)=>{
+    if(!file || !/^image\//.test(file.type)) return reject(new Error('Arquivo não é imagem'));
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let {width:w, height:h} = img;
+        if(w>maxDim || h>maxDim){ const s = maxDim/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+        const c = document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>reject(new Error('Não consegui ler a imagem'));
+      img.src = reader.result;
+    };
+    reader.onerror = ()=>reject(new Error('Falha ao ler o arquivo'));
+    reader.readAsDataURL(file);
+  });
+}
 const CULPADOS_PADRAO = ['Fábrica','Vendas','Dupla (Vendedor e Designer)','Escritório','Cliente'];
 const TIPOS_PRODUTO_PADRAO = ['Boné','Trucker','Americano','5Port','New York','Dad Hat','Viseira','Bucket','Camisa','Neoprene'];
 const QUE_FIM_PADRAO = ['Entregue','Em estoque','Refabricado e entregue','Cancelado'];
@@ -380,6 +812,15 @@ function getRes(tipo){ return RES_MAP[tipo] || RES_FALLBACK; }
 
 /* ================= DADOS DE DEMONSTRAÇÃO (fallback) ================= */
 function seededRandom(seed){ let s=seed; return function(){ s=(s*9301+49297)%233280; return s/233280; }; }
+// Placeholder de "foto" para o modo demonstração (SVG embutido como data URL).
+function demoFoto(txt, hue){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600'>`+
+    `<rect width='100%' height='100%' fill='hsl(${hue},32%,20%)'/>`+
+    `<rect x='60' y='60' width='680' height='480' rx='18' fill='none' stroke='hsl(${hue},45%,42%)' stroke-width='3' stroke-dasharray='10 12'/>`+
+    `<text x='50%' y='47%' fill='hsl(${hue},55%,75%)' font-family='Inter,Arial' font-size='40' font-weight='700' text-anchor='middle'>${txt}</text>`+
+    `<text x='50%' y='57%' fill='hsl(${hue},30%,58%)' font-family='Inter,Arial' font-size='20' text-anchor='middle'>foto de exemplo</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
 function gerarDadosDemo(){
   const rnd = seededRandom(42);
   const pick = (arr)=> arr[Math.floor(rnd()*arr.length)];
@@ -435,7 +876,13 @@ function gerarDadosDemo(){
         const faixa = faixas[tipoResolucao];
         const custo = randInt(faixa[0], faixa[1]);
         const tipoProduto = weightedPick(Object.keys(PRODUTO_PESO).map(p=>({nome:p, peso:PRODUTO_PESO[p]}))).nome;
-        out.push({ ...base_rec, auditado:true, setor:sub.setor, culpaDe:sub.setor, responsavel:resp.nome, empresa, tipoProduto, subproblema:sub.nome, detalhe:'', qtd:randInt(0,90), custo, tipoResolucao, queFim: pick(QUE_FIM_PADRAO) });
+        // Demo: parte dos casos de Vendas/Dupla vem com 1–2 "fotos" (placeholder), o resto sem foto.
+        let foto = '';
+        if(SETORES_VENDAS.includes(sub.setor) && rnd() < 0.62){
+          const hue = randInt(0,359);
+          foto = rnd() < 0.4 ? [demoFoto(tipoProduto,hue), demoFoto(sub.nome,(hue+40)%360)].join('\n') : demoFoto(tipoProduto,hue);
+        }
+        out.push({ ...base_rec, auditado:true, setor:sub.setor, culpaDe:sub.setor, responsavel:resp.nome, empresa, tipoProduto, subproblema:sub.nome, detalhe:'', qtd:randInt(0,90), custo, tipoResolucao, queFim: pick(QUE_FIM_PADRAO), foto });
       }
     }
   });
@@ -482,6 +929,7 @@ async function loadRealData(){
     tipoResolucao: row.tipoResolucao || null,
     queFim: row.queFim || null,
     status: row.status || null, // preenchido quando a coluna "Status" existir; senão derivado
+    foto: row.foto || '',       // link(s) da(s) foto(s) — coluna "Foto" na planilha
   }));
   return rows;
 }
@@ -520,15 +968,20 @@ async function boot(){
     USING_DEMO = true;
   }
   derivarListasDinamicas();
+  await loadUsuarios();
   restoreState(); // recupera a última visão (tela, setor, empresa, filtro rápido, ordenação)
   initFilterOptions();
   const fs=document.getElementById('fSetor'), fe=document.getElementById('fEmpresa');
   if(fs && state.setor) fs.value=state.setor;
   if(fe && state.empresa) fe.value=state.empresa;
+
+  // Sessão: recupera a anterior e valida contra a lista atual de usuários.
+  SESSION = loadSession();
+  if(SESSION && loginAtivo() && !USUARIOS.find(u=>String(u.login).toLowerCase()===String(SESSION.login).toLowerCase())) SESSION = null;
+
   document.getElementById('bootScreen').style.display = 'none';
-  document.getElementById('appRoot').style.display = 'flex';
-  render();
-  syncFromHash(); // abre o drawer se a URL já apontar para um caso (link compartilhado)
+  if(loginAtivo() && !SESSION){ mostrarLogin(); return; }  // exige login quando há usuários cadastrados
+  mostrarApp();
 }
 
 async function refreshData(silent){
@@ -569,8 +1022,12 @@ function restoreState(){ try{ const s=JSON.parse(localStorage.getItem(LS_STATE)|
 }catch(e){} }
 /* ---------- Usuário atual (para o histórico) ---------- */
 const LS_USER = 'seubone_user';
-function getUsuario(){ try{ return localStorage.getItem(LS_USER)||''; }catch(e){ return ''; } }
+function getUsuario(){
+  if(SESSION && SESSION.nome) return SESSION.nome;             // logado → nome da sessão
+  try{ return localStorage.getItem(LS_USER)||''; }catch(e){ return ''; }
+}
 function setUsuario(){
+  if(SESSION) return;                                          // com login ativo, o nome vem da sessão
   const atual = getUsuario();
   const n = prompt('Seu nome (aparece no histórico dos casos):', atual);
   if(n===null) return;
@@ -579,9 +1036,15 @@ function setUsuario(){
 }
 function updateSideUser(){
   const nome = getUsuario();
-  const elNome = document.getElementById('sideNome'), elAv = document.getElementById('sideAvatar');
-  if(elNome) elNome.textContent = nome || 'Definir seu nome';
+  const elNome = document.getElementById('sideNome'), elAv = document.getElementById('sideAvatar'),
+        elRole = document.getElementById('sideRole'), elFoot = document.getElementById('sideFoot'),
+        elLogout = document.getElementById('btnLogout'), elUser = document.getElementById('sideUser');
+  if(elNome) elNome.textContent = nome || (loginAtivo() ? '—' : 'Definir seu nome');
   if(elAv) elAv.textContent = nome ? nome.trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase() : '?';
+  if(elRole){ if(SESSION){ elRole.textContent = (PAPEIS[SESSION.papel]||{}).label || SESSION.papel; elRole.style.display=''; } else elRole.style.display='none'; }
+  if(elFoot) elFoot.textContent = USING_DEMO ? 'dados de exemplo' : 'planilha em tempo real';
+  if(elLogout) elLogout.style.display = SESSION ? '' : 'none';
+  if(elUser) elUser.style.cursor = SESSION ? 'default' : 'pointer';
 }
 
 function getViews(){ try{ return JSON.parse(localStorage.getItem(LS_VIEWS)||'[]'); }catch(e){ return []; } }
@@ -714,10 +1177,50 @@ document.getElementById('fSetor').addEventListener('change', e=>{ state.setor=e.
 document.getElementById('fEmpresa').addEventListener('change', e=>{ state.empresa=e.target.value; render(); });
 document.getElementById('btnRefresh').addEventListener('click', refreshData);
 document.getElementById('btnNovoCaso').addEventListener('click', openNovoCaso);
-document.getElementById('sideUser').addEventListener('click', setUsuario);
+document.getElementById('btnNovoCasoTop').addEventListener('click', openNovoCaso);
+
+/* ================= TEMA (claro/escuro) ================= */
+const LS_THEME = 'seubone_theme';
+function currentTheme(){ return document.documentElement.getAttribute('data-theme')==='light' ? 'light' : 'dark'; }
+function syncThemeIcon(){
+  const b = document.getElementById('btnTheme'); if(!b) return;
+  const dark = currentTheme()==='dark';
+  b.textContent = dark ? '☀' : '☾';
+  b.title = dark ? 'Mudar para tema claro' : 'Mudar para tema escuro';
+}
+function setTheme(t, persist){
+  t = (t==='light') ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  if(persist!==false){ try{ localStorage.setItem(LS_THEME, t); }catch(e){} }
+  syncThemeIcon();
+  applyChartTheme();
+  if(document.getElementById('appRoot').style.display!=='none') render(); // recria gráficos com as novas cores
+}
+function toggleTheme(){ setTheme(currentTheme()==='dark' ? 'light' : 'dark'); }
+document.getElementById('btnTheme').addEventListener('click', toggleTheme);
+/* Se o shell embutir e trocar o tema no <html>, o painel acompanha (sem gravar) */
+new MutationObserver(()=>{ syncThemeIcon(); applyChartTheme(); })
+  .observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+
+/* Paleta dos gráficos conforme o tema — Chart.js desenha em canvas (sem CSS var) */
+function themeColors(){
+  return currentTheme()==='dark'
+    ? { grid:'rgba(255,255,255,.08)', axis:'#8B9098', surface:'#191A1F', line:'#E7E9EC' }
+    : { grid:'#F0F1F3',               axis:'#8A9099', surface:'#fff',    line:'#17181B' };
+}
+function applyChartTheme(){
+  if(typeof Chart==='undefined') return;
+  const c = themeColors();
+  Chart.defaults.color = c.axis;
+  Chart.defaults.borderColor = c.grid;
+  Chart.defaults.font.family = 'Inter';
+}
+applyChartTheme(); syncThemeIcon();
+document.getElementById('sideUser').addEventListener('click', (e)=>{ if(e.target.id==='btnLogout') return; setUsuario(); });
+document.getElementById('btnLogout').addEventListener('click', (e)=>{ e.stopPropagation(); if(confirm('Sair da sua conta?')) logout(); });
 updateSideUser();
 document.querySelectorAll('.nav-item').forEach(el=>{
-  el.addEventListener('click', ()=>{ closeDrawer(false); SEL.clear(); selBar(); state.screen = el.dataset.screen; render(); });
+  el.addEventListener('click', ()=>{ if(!podeVerTela(el.dataset.screen)) return; closeDrawer(false); SEL.clear(); selBar(); state.screen = el.dataset.screen; render(); });
 });
 
 function cutoffFor(periodo){
@@ -777,6 +1280,7 @@ function moda(list, key){
 
 /* ================= RENDER ================= */
 function render(){
+  if(!podeVerTela(state.screen)) state.screen = telaInicialPapel();   // guard: nunca renderiza tela proibida
   persistState();
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===state.screen));
   document.getElementById('navBadge').textContent = RECORDS.filter(r=>!r.auditado).length;
@@ -793,11 +1297,15 @@ function render(){
     causas: ['Ranking de Causas', 'Pareto por custo, produto e volume · ' + rotuloPeriodo()],
     resp: ['Ranking por Consultor', 'Quem mais gera custo e como cada um resolve · ' + rotuloPeriodo()],
     casos: ['Casos / Auditoria', 'Fila de casos pendentes e já auditados · ' + rotuloPeriodo()],
-    reuniao: ['Reunião Semanal · Escritório', 'Para apresentar — navegação de semana própria, não usa os filtros do topo'],
+    reuniao: ['Reunião de Vendas', 'Erros da semana para apresentar ao time — Vendas e Dupla · navegação de semana própria'],
   };
   document.getElementById('pageTitle').textContent = TITLES[state.screen][0];
   document.getElementById('pageSub').textContent = TITLES[state.screen][1];
   document.querySelector('.filters').style.display = state.screen==='reuniao' ? 'none' : '';
+  // Faixa visível de modo demonstração — evita que dados de exemplo sejam confundidos com reais.
+  document.getElementById('demoBanner').innerHTML = USING_DEMO
+    ? `<div class="demo-strip">⚠️ <b>Modo demonstração</b> — os números abaixo são dados de exemplo, não a planilha real. ${CONFIG.API_URL ? 'Não consegui ler a planilha; tente <b>⟳ Atualizar</b>.' : ''}</div>`
+    : (!loginAtivo() ? `<div class="setup-warn">🔓 <b>Sem controle de acesso</b> — nenhum usuário cadastrado na aba "Usuarios". Todos entram como Gestor. Rode <b>seedUsuarios()</b> no Apps Script e cadastre o time para ativar o login.</div>` : '');
 
   const main = document.getElementById('main');
   main.innerHTML = '';
@@ -821,7 +1329,7 @@ function renderExec(main, data, all){
   const total = data.length;
   const pendentes = all.length - data.length;
   const custoTotal = data.reduce((a,r)=>a+(r.custo||0),0);
-  const custoMedio = custoTotal/total;
+  const custoMedio = total ? custoTotal/total : 0;
   const saidaCaixa = data.filter(r=>getRes(r.tipoResolucao).caixa==='caixa').reduce((a,r)=>a+(r.custo||0),0);
   const naoClassCusto = data.filter(r=>getRes(r.tipoResolucao).caixa==='desconhecido').reduce((a,r)=>a+(r.custo||0),0);
   const custoOperacional = custoTotal - saidaCaixa - naoClassCusto;
@@ -834,28 +1342,73 @@ function renderExec(main, data, all){
   const cadastroCount = {}; data.forEach(r=>cadastroCount[r.quemCadastrou]=(cadastroCount[r.quemCadastrou]||0)+1);
   const cadastroTop = Object.entries(cadastroCount).sort((a,b)=>b[1]-a[1])[0];
 
+  // Completude dos dados no recorte (sobre TODOS os casos, auditados ou não) — visibilidade do item 1.
+  const compTot = all.length || 1;
+  const pctFilled = (fn)=> Math.round(all.filter(fn).length / compTot * 100);
+  const comp = [
+    { rot:'Setor', pct: pctFilled(r=>r.setor) },
+    { rot:'Responsável', pct: pctFilled(r=>r.responsavel) },
+    { rot:'Custo', pct: pctFilled(r=>r.custo!==null && r.custo!==undefined && r.custo!=='') },
+    { rot:'Empresa/linha', pct: pctFilled(r=>r.empresa) },
+  ];
+  const compBaixa = comp.some(c=>c.pct<60);
+  const corPct = (p)=> p>=80?'#15703D':p>=50?'#8A6A00':'#A62A23';
+  const compStrip = `<div class="card" style="margin-bottom:14px;padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:${compBaixa?'10':'2'}px">
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#565C64">Completude dos dados no recorte</span>
+        ${compBaixa?'<span class="badge pill-amber">campos em branco atrapalham as análises</span>':''}
+        <span style="flex:1"></span><span style="font-size:12px;color:#8A9099">${all.length} caso(s)</span>
+      </div>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">
+        ${comp.map(c=>`<div style="min-width:120px"><div style="font-size:12.5px;color:#565C64;margin-bottom:5px">${c.rot} <b style="color:${corPct(c.pct)}">${c.pct}%</b></div><div class="track" style="height:7px"><div class="fill" style="width:${c.pct}%;background:${corPct(c.pct)}"></div></div></div>`).join('')}
+      </div>
+    </div>`;
+
   main.innerHTML = `
     <div class="banner">
       <span class="b-ic">!</span>
       <div>
-        <div class="b-title">Setor com mais ocorrências: ${setorTop[0]} (${setorTop[1]} erros · ${Math.round(setorTop[1]/total*100)}% do total auditado)</div>
+        <div class="b-title">Setor com mais ocorrências: ${esc(setorTop[0])} (${setorTop[1]} erros · ${total?Math.round(setorTop[1]/total*100):0}% do total auditado)</div>
         <div class="b-text">${pendentes>0 ? `<b>${pendentes} caso(s)</b> ainda sem auditoria não entram nestes números — vá em "Casos / Auditoria" pra fechar.` : 'Todos os casos do período já foram auditados.'}</div>
       </div>
     </div>
 
-    <div class="grid grid-2">
-      <div class="kpi-dark"><div class="k-label">Total de Erros (auditados)</div><div class="k-value">${total}</div><div class="k-foot">${pendentes} pendente(s) de auditoria</div></div>
-      <div class="kpi-accent"><div class="k-label">Custo Total dos Erros</div><div class="k-value">${brl(custoTotal)}</div><div class="k-foot">${brl(custoMedio)} em média por erro</div></div>
+    ${compStrip}
+
+    <div class="metrics">
+      <div class="metric hero">
+        <div class="m-top"><span class="m-ic">▦</span><span class="m-label">Total de erros auditados</span></div>
+        <div class="m-value">${total}</div>
+        <div class="m-foot">${pendentes} pendente(s) de auditoria</div>
+      </div>
+      <div class="metric">
+        <div class="m-top"><span class="m-ic ic-amber">◈</span><span class="m-label">Custo total dos erros</span></div>
+        <div class="m-value">${brl(custoTotal)}</div>
+        <div class="m-foot">${brl(custoMedio)} em média por erro</div>
+      </div>
+      <div class="metric danger">
+        <div class="m-top"><span class="m-ic ic-red">▲</span><span class="m-label">Saída de caixa (reembolsos)</span></div>
+        <div class="m-value">${brl(saidaCaixa)}</div>
+        <div class="m-foot">${custoTotal? Math.round(saidaCaixa/custoTotal*100):0}% do custo total é dinheiro saindo</div>
+      </div>
+      <div class="metric">
+        <div class="m-top"><span class="m-ic ic-slate">▤</span><span class="m-label">Custo operacional</span></div>
+        <div class="m-value">${brl(custoOperacional)}</div>
+        <div class="m-foot">${naoClassCusto>0 ? brl(naoClassCusto)+' ainda sem resolução classificada' : 'material, refação, desconto — come margem'}</div>
+      </div>
     </div>
 
     <div class="grid grid-2">
-      <div class="kpi-red"><div class="k-label">Saída de caixa (reembolsos) <span class="pill pill-red">dinheiro saindo</span></div><div class="k-value">${brl(saidaCaixa)}</div><div class="k-foot">${custoTotal? Math.round(saidaCaixa/custoTotal*100):0}% do custo total é reembolso</div></div>
-      <div class="stat"><div class="s-label">Custo operacional (material, refação, desconto)</div><div class="s-value">${brl(custoOperacional)}</div><div class="s-foot">${naoClassCusto>0 ? brl(naoClassCusto)+' ainda sem tipo de resolução classificado' : 'não sai do caixa como reembolso, mas come margem'}</div></div>
-    </div>
-
-    <div class="grid grid-2">
-      <div class="stat"><div class="s-label">Solução mais recorrente</div><div class="s-value sm">${solucaoRecorrente}</div><div class="s-foot">${data.filter(r=>r.tipoResolucao===solucaoRecorrente).length} de ${total} casos</div></div>
-      <div class="stat"><div class="s-label">Quem mais registra erros <span class="pill pill-amber">abertura de caso</span></div><div class="s-value sm">${cadastroTop[0]}</div><div class="s-foot">${cadastroTop[1]} caso(s) abertos — indicador de quem mais cadastra, não de quem mais erra</div></div>
+      <div class="metric">
+        <div class="m-top"><span class="m-ic ic-green">◆</span><span class="m-label">Solução mais recorrente</span></div>
+        <div class="m-value sm">${esc(solucaoRecorrente)}</div>
+        <div class="m-foot">${data.filter(r=>r.tipoResolucao===solucaoRecorrente).length} de ${total} casos</div>
+      </div>
+      <div class="metric">
+        <div class="m-top"><span class="m-ic ic-blue">◉</span><span class="m-label">Quem mais registra erros</span></div>
+        <div class="m-value sm">${esc(cadastroTop[0])}</div>
+        <div class="m-foot">${cadastroTop[1]} caso(s) abertos — quem mais cadastra, não quem mais erra</div>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:14px">
@@ -876,7 +1429,7 @@ function renderExec(main, data, all){
       <div class="card"><h3>Composição por setor do problema</h3><div class="card-sub">Onde o erro se origina.</div><div class="chart-box" style="height:224px"><canvas id="chSetor"></canvas></div></div>
       <div class="card" style="display:flex;flex-direction:column"><h3>Leitura</h3><div class="card-sub">% de erros por setor no período auditado.</div>
         <div style="margin-top:auto">
-          ${setoresPresentes.map(s=>`<div class="legend-row"><span class="dot" style="background:${colorForSetor(s)}"></span><span>${s}</span><b style="margin-left:auto">${Math.round(bySetor[s]/total*100)}%</b></div>`).join('')}
+          ${setoresPresentes.map(s=>`<div class="legend-row"><span class="dot" style="background:${colorForSetor(s)}"></span><span>${esc(s)}</span><b style="margin-left:auto">${Math.round(bySetor[s]/total*100)}%</b></div>`).join('')}
           <div class="legend-row"><span>Total auditado</span><b style="margin-left:auto;font-size:22px">${total}</b></div>
         </div>
       </div>
@@ -914,14 +1467,14 @@ function renderExec(main, data, all){
     options:{ maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
       plugins:{ legend:{display:true, position:'top', align:'end', labels:{usePointStyle:true, pointStyle:'circle', boxWidth:8, boxHeight:8, font:{size:11.5,family:'Inter'}, color:'#475059'}},
         tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=> it.dataset.type==='bar' ? '  Erros: '+it.parsed.y : '  Custo: '+brl(it.parsed.y) } } },
-      scales:{ x:{grid:{display:false}, border:{display:false}, ticks:{color:'#8A9099', font:{size:11,family:'Inter'}}},
-        y:{position:'left', grid:{color:'#F0F1F3',drawTicks:false}, border:{display:false}, beginAtZero:true},
+      scales:{ x:{grid:{display:false}, border:{display:false}, ticks:{color:themeColors().axis, font:{size:11,family:'Inter'}}},
+        y:{position:'left', grid:{color:themeColors().grid,drawTicks:false}, border:{display:false}, beginAtZero:true},
         y1:{position:'right', grid:{display:false}, border:{display:false}, beginAtZero:true, ticks:{callback:(v)=>'R$ '+(v/1000).toFixed(0)+'k', font:{size:10.5}}} }
     }
   });
   charts.setor = safeChart('chSetor', {
     type:'doughnut',
-    data:{ labels:setoresPresentes, datasets:[{ data: setoresPresentes.map(s=>bySetor[s]), backgroundColor: setoresPresentes.map(colorForSetor), borderColor:'#fff', borderWidth:3 }] },
+    data:{ labels:setoresPresentes, datasets:[{ data: setoresPresentes.map(s=>bySetor[s]), backgroundColor: setoresPresentes.map(colorForSetor), borderColor:themeColors().surface, borderWidth:3 }] },
     options:{ maintainAspectRatio:false, cutout:'68%', plugins:{legend:{display:false}} }
   });
 
@@ -939,7 +1492,7 @@ function renderExec(main, data, all){
     options:{ maintainAspectRatio:false, indexAxis:'y',
       plugins:{ legend:{display:true, position:'top', align:'end', labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:11.5,family:'Inter'},color:'#475059'}},
         tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=>'  '+it.dataset.label+': '+it.parsed.x.toFixed(1)+'%' } } },
-      scales:{ x:{grid:{color:'#F0F1F3',drawTicks:false}, border:{display:false}, min:0, max:100, ticks:{callback:v=>v+'%'}},
+      scales:{ x:{grid:{color:themeColors().grid,drawTicks:false}, border:{display:false}, min:0, max:100, ticks:{callback:v=>v+'%'}},
         y:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} }
     }
   });
@@ -957,6 +1510,7 @@ function renderCausas(main, data){
   let acc=0; list.forEach(it=>{ it.pct = totalCusto? it.custo/totalCusto*100 : 0; acc+=it.pct; it.acc=acc; it.solComum = moda(it.rows,'tipoResolucao'); });
   const top = list.slice(0,10);
   const paretoIdx = list.findIndex(it=>it.acc>=80);
+  const maxPct = list.length ? list[0].pct : 0;
 
   const prodMap = {};
   data.forEach(r=>{ const k = r.tipoProduto || 'Não informado'; if(!prodMap[k]) prodMap[k]={nome:k,custo:0}; prodMap[k].custo += (r.custo||0); });
@@ -985,13 +1539,15 @@ function renderCausas(main, data){
     <div class="card">
       <h3>Detalhamento por causa</h3>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>#</th><th>Causa (Tipo de problema)</th><th>Setor predominante</th><th class="num">Custo total</th><th class="num">% do custo</th><th class="num">% acumulado</th><th class="num">Ocorrências</th><th>Solução mais comum</th></tr></thead>
+        <thead><tr><th>#</th><th>Causa (Tipo de problema)</th><th>Setor predominante</th><th class="num">Custo total</th><th style="min-width:150px">% do custo</th><th class="num">% acumulado</th><th class="num">Ocorrências</th><th>Solução mais comum</th></tr></thead>
         <tbody>${list.map((it,i)=>`<tr>
             <td><span class="rank ${i<3?'top':''}">${i+1}</span></td>
-            <td style="font-weight:600">${it.nome}</td>
-            <td><span class="dot" style="display:inline-block;background:${colorForSetor(it.setor)};margin-right:7px"></span>${it.setor}</td>
-            <td class="num">${brl(it.custo)}</td><td class="num">${it.pct.toFixed(1)}%</td><td class="num">${it.acc.toFixed(1)}%</td>
-            <td class="num">${it.n}</td><td>${it.solComum}</td>
+            <td style="font-weight:600">${esc(it.nome)}</td>
+            <td><span class="dot" style="display:inline-block;background:${colorForSetor(it.setor)};margin-right:7px"></span>${esc(it.setor)}</td>
+            <td class="num">${brl(it.custo)}</td>
+            <td><div class="mbar"><div class="track"><div class="fill" style="width:${maxPct? Math.max(2, it.pct/maxPct*100):0}%;background:${colorForSetor(it.setor)}"></div></div><span class="val">${it.pct.toFixed(1)}%</span></div></td>
+            <td class="num">${it.acc.toFixed(1)}%</td>
+            <td class="num">${it.n}</td><td>${esc(it.solComum)}</td>
           </tr>`).join('')}</tbody>
       </table></div>
     </div>
@@ -1000,25 +1556,25 @@ function renderCausas(main, data){
   charts.pareto = safeChart('chPareto', {
     data:{ labels: top.map(t=>t.nome), datasets:[
       { type:'bar', label:'Custo total (R$)', data: top.map(t=>t.custo), backgroundColor: top.map(t=>colorForSetor(t.setor)), borderRadius:5, barPercentage:.7, yAxisID:'y' },
-      { type:'line', label:'% acumulado', data: top.map(t=>t.acc), borderColor:'#17181B', backgroundColor:'#17181B', borderWidth:2, tension:.3, pointRadius:3, yAxisID:'y1' },
+      { type:'line', label:'% acumulado', data: top.map(t=>t.acc), borderColor:themeColors().line, backgroundColor:themeColors().line, borderWidth:2, tension:.3, pointRadius:3, yAxisID:'y1' },
     ]},
     options:{ maintainAspectRatio:false,
       plugins:{ legend:{display:true, position:'top', align:'end', labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:11.5,family:'Inter'},color:'#475059'}},
         tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=> it.dataset.type==='bar' ? '  '+brl(it.parsed.y) : '  '+it.parsed.y.toFixed(1)+'% acumulado' } } },
-      scales:{ x:{grid:{display:false}, border:{display:false}, ticks:{color:'#8A9099', font:{size:10.5,family:'Inter'}, maxRotation:38, minRotation:38}},
-        y:{position:'left', grid:{color:'#F0F1F3',drawTicks:false}, border:{display:false}, beginAtZero:true, ticks:{callback:v=>'R$ '+(v/1000).toFixed(1)+'k'}},
+      scales:{ x:{grid:{display:false}, border:{display:false}, ticks:{color:themeColors().axis, font:{size:10.5,family:'Inter'}, maxRotation:38, minRotation:38}},
+        y:{position:'left', grid:{color:themeColors().grid,drawTicks:false}, border:{display:false}, beginAtZero:true, ticks:{callback:v=>'R$ '+(v/1000).toFixed(1)+'k'}},
         y1:{position:'right', grid:{display:false}, border:{display:false}, min:0, max:100, ticks:{callback:v=>v+'%'}} }
     }
   });
   charts.produto = safeChart('chProduto', {
     type:'bar', data:{ labels: prodList.map(p=>p.nome), datasets:[{ data: prodList.map(p=>p.custo), backgroundColor:'#FFC400', borderRadius:5, barPercentage:.7 }] },
     options:{ maintainAspectRatio:false, indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=>'  '+brl(it.parsed.x) } } },
-      scales:{ x:{grid:{color:'#F0F1F3',drawTicks:false}, border:{display:false}, ticks:{callback:v=>'R$ '+(v/1000).toFixed(1)+'k', font:{size:10.5}}}, y:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} } }
+      scales:{ x:{grid:{color:themeColors().grid,drawTicks:false}, border:{display:false}, ticks:{callback:v=>'R$ '+(v/1000).toFixed(1)+'k', font:{size:10.5}}}, y:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} } }
   });
   charts.qtd = safeChart('chQtd', {
     type:'bar', data:{ labels: qtdList.map(q=>q.nome), datasets:[{ data: qtdList.map(q=>q.qtd), backgroundColor:'#565C64', borderRadius:5, barPercentage:.7 }] },
     options:{ maintainAspectRatio:false, indexAxis:'y', plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=>'  '+it.parsed.x+' unidades' } } },
-      scales:{ x:{grid:{color:'#F0F1F3',drawTicks:false}, border:{display:false}}, y:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} } }
+      scales:{ x:{grid:{color:themeColors().grid,drawTicks:false}, border:{display:false}}, y:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} } }
   });
 }
 
@@ -1064,12 +1620,14 @@ function renderResp(main, data){
       <h3>Ranking completo</h3>
       <div class="card-sub">% reembolso acima de 20% pede conversa 1:1 — é dinheiro saindo do caixa.</div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>#</th><th>Consultor / Área</th><th>Setor</th><th class="num">Ocorrências</th><th class="num">Custo total</th><th class="num">Custo médio</th><th>Solução mais comum</th><th>Situação</th></tr></thead>
+        <thead><tr><th>#</th><th>Consultor / Área</th><th>Setor</th><th class="num">Ocorrências</th><th style="min-width:160px">Custo total</th><th class="num">Custo médio</th><th>Solução mais comum</th><th>Situação</th></tr></thead>
         <tbody>${list.map((m,i)=>{
             const sit = m.pctReembolso===0 ? {c:'pill-green',t:'Saudável'} : m.pctReembolso<=20 ? {c:'pill-amber',t:'Atenção'} : {c:'pill-red',t:'Crítico'};
-            return `<tr><td><span class="rank ${i<3?'top':''}">${i+1}</span></td><td style="font-weight:600">${m.nome}</td>
+            return `<tr><td><span class="rank ${i<3?'top':''}">${i+1}</span></td><td style="font-weight:600">${esc(m.nome)}</td>
               <td><span class="dot" style="display:inline-block;background:${colorForSetor(m.setor)};margin-right:7px"></span>${m.setor}</td>
-              <td class="num">${m.n}</td><td class="num">${brl(m.custo)}</td><td class="num">${brl(m.custoMedio)}</td><td>${m.solComum}</td>
+              <td class="num">${m.n}</td>
+              <td><div class="mbar"><div class="track"><div class="fill" style="width:${maiorCusto.custo? Math.max(2, m.custo/maiorCusto.custo*100):0}%;background:${colorForSetor(m.setor)}"></div></div><span class="val">${brl(m.custo)}</span></div></td>
+              <td class="num">${brl(m.custoMedio)}</td><td>${m.solComum}</td>
               <td><span class="badge ${sit.c}">${sit.t}</span></td></tr>`;
           }).join('')}</tbody>
       </table></div>
@@ -1081,7 +1639,7 @@ function renderResp(main, data){
     options:{ maintainAspectRatio:false, indexAxis:'y',
       plugins:{ legend:{display:true, position:'top', align:'end', labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:10.5,family:'Inter'},color:'#475059'}},
         tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=>'  '+it.dataset.label+': '+it.parsed.x+' caso(s)' } } },
-      scales:{ x:{stacked:true, grid:{color:'#F0F1F3',drawTicks:false}, border:{display:false}}, y:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} } }
+      scales:{ x:{stacked:true, grid:{color:themeColors().grid,drawTicks:false}, border:{display:false}}, y:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11.5,family:'Inter'}}} } }
   });
 }
 
@@ -1098,6 +1656,7 @@ const STATUS_MAP = Object.fromEntries(STATUS_DEF.map((s,i)=>[s.key, {...s, ordem
 function effectiveStatus(r){ return (r.status && STATUS_MAP[r.status]) ? r.status : (r.auditado ? 'resolvido' : 'novo'); }
 function statusBadge(r){ const s=STATUS_MAP[effectiveStatus(r)]; return `<span class="badge stbadge" style="background:${s.cor}1A;color:${s.cor}">${s.label}</span>`; }
 function setCaseStatus(r, key){
+  if(!podeAuditar()) return;
   if(!STATUS_MAP[key] || effectiveStatus(r)===key) return;
   r.status = key;
   r.auditado = (key==='resolvido'); // mantém as análises coerentes: só "Resolvido" conta como auditado
@@ -1143,12 +1702,12 @@ function sortCasos(rows){
 /* ---------- Kanban (pipeline por status) ---------- */
 function kcard(r){
   return `<div class="kcard" draggable="true" data-id="${r.id}">
-    <div class="kc-top"><span class="kc-id">#${r.idVenda}</span>${!r.auditado?ageBadge(r):''}</div>
-    <div class="kc-name">${r.nomeCard}</div>
+    <div class="kc-top"><span class="kc-id">#${esc(r.idVenda)}</span>${!r.auditado?ageBadge(r):''}</div>
+    <div class="kc-name">${esc(r.nomeCard)}</div>
     <div class="kc-meta">
-      ${r.setor ? `<span><span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:4px"></span>${r.setor}</span>` : ''}
-      ${r.empresa ? `<span>${r.empresa}</span>` : ''}
-      ${r.responsavel ? `<span>${r.responsavel}</span>` : ''}
+      ${r.setor ? `<span><span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:4px"></span>${esc(r.setor)}</span>` : ''}
+      ${r.empresa ? `<span>${esc(r.empresa)}</span>` : ''}
+      ${r.responsavel ? `<span>${esc(r.responsavel)}</span>` : ''}
     </div>
   </div>`;
 }
@@ -1197,21 +1756,22 @@ function renderCasos(main, all){
 
   const views = getViews();
   const vChip = (k,label)=>`<button class="chip ${state.casosView===k?'on':''}" data-view="${k}">${label}</button>`;
-  const layout = state.casosLayout==='kanban' ? 'kanban' : 'lista';
+  const podeSel = podeAuditar();                                   // seleção em massa e kanban só p/ quem audita
+  const layout = (podeSel && state.casosLayout==='kanban') ? 'kanban' : 'lista';
 
   const listCard = `
     <div class="card">
-      <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.</div></div></div>
+      <div class="card-head"><div><h3>Casos registrados</h3><div class="card-sub">Clique em uma linha pra abrir o caso; clique no cabeçalho pra ordenar.${podeSel?'':' <b>Somente leitura</b> — você pode ver os casos, mas não auditar.'}</div></div></div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th class="chkcell"><input type="checkbox" id="chkAll"></th>${th('id','ID')}${th('nome','Cliente / Card')}${th('data','Data')}${th('idade','Idade')}${th('setor','Setor')}${th('resp','Responsável')}${th('custo','Custo',true)}${th('status','Status')}</tr></thead>
+        <thead><tr>${podeSel?'<th class="chkcell"><input type="checkbox" id="chkAll"></th>':''}${th('id','ID')}${th('nome','Cliente / Card')}${th('data','Data')}${th('idade','Idade')}${th('setor','Setor')}${th('resp','Responsável')}${th('custo','Custo',true)}${th('status','Status')}</tr></thead>
         <tbody>${rows.map(r=>`<tr class="clickable${SEL.has(r.id)?' sel-row':''}" data-id="${r.id}">
-            <td class="chkcell"><input type="checkbox" class="rowchk" data-id="${r.id}" ${SEL.has(r.id)?'checked':''}></td>
-            <td><span class="idchip" data-copy="${r.idVenda}">#${r.idVenda}</span></td>
-            <td style="font-weight:600">${r.nomeCard}</td>
+            ${podeSel?`<td class="chkcell"><input type="checkbox" class="rowchk" data-id="${r.id}" ${SEL.has(r.id)?'checked':''}></td>`:''}
+            <td><span class="idchip" data-copy="${esc(r.idVenda)}">#${esc(r.idVenda)}</span></td>
+            <td style="font-weight:600">${esc(r.nomeCard)}</td>
             <td>${fmtDate(r.date)}</td>
             <td>${ageBadge(r)}</td>
-            <td>${r.setor ? `<span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:7px"></span>${r.setor}` : '<span style="color:#B9BEC6">—</span>'}</td>
-            <td>${r.responsavel || '<span style="color:#B9BEC6">—</span>'}</td>
+            <td>${r.setor ? `<span class="dot" style="display:inline-block;background:${colorForSetor(r.setor)};margin-right:7px"></span>${esc(r.setor)}` : '<span style="color:#B9BEC6">—</span>'}</td>
+            <td>${esc(r.responsavel) || '<span style="color:#B9BEC6">—</span>'}</td>
             <td class="num">${r.custo!==null && r.custo!==undefined ? brl(r.custo) : '<span style="color:#B9BEC6">—</span>'}</td>
             <td>${statusBadge(r)}</td>
           </tr>`).join('')}</tbody>
@@ -1228,13 +1788,13 @@ function renderCasos(main, all){
     <div class="chips-bar">
       ${vChip('todos','Todos')}${vChip('pendentes','Pendentes')}${vChip('parados7','Parados +7d')}${vChip('altoCusto','Alto custo')}
       ${views.length?'<span class="chip-sep"></span>':''}
-      ${views.map((v,i)=>`<button class="chip" data-savedidx="${i}" title="setor: ${v.setor||'todos'} · linha: ${v.empresa||'todas'} · ${v.casosView||'todos'}">${v.nome} <span class="x" data-delidx="${i}">✕</span></button>`).join('')}
+      ${views.map((v,i)=>`<button class="chip" data-savedidx="${i}" title="setor: ${esc(v.setor)||'todos'} · linha: ${esc(v.empresa)||'todas'} · ${esc(v.casosView)||'todos'}">${esc(v.nome)} <span class="x" data-delidx="${i}">✕</span></button>`).join('')}
       <button class="chip chip-add" id="chipSalvar">+ Salvar visão atual</button>
       <span style="flex:1"></span>
       <input class="searchbar" id="buscaCaso" placeholder="Buscar ID, cliente ou consultor…" value="${state.buscaCaso}" style="max-width:260px">
       <div class="seg-toggle">
         <button class="seg ${layout==='lista'?'on':''}" data-layout="lista">☰ Lista</button>
-        <button class="seg ${layout==='kanban'?'on':''}" data-layout="kanban">▦ Kanban</button>
+        ${podeSel?`<button class="seg ${layout==='kanban'?'on':''}" data-layout="kanban">▦ Kanban</button>`:''}
       </div>
     </div>
     ${layout==='kanban' ? kanbanHTML(rows) : listCard}
@@ -1270,14 +1830,13 @@ function renderCasos(main, all){
 }
 
 /* ================= REUNIÃO SEMANAL · ESCRITÓRIO ================= */
-function renderReuniao(main){
-  const monday = state.semanaReuniao;
-  const sunday = sundayOf(monday);
-  const setorAlvo = 'Escritório';
-
-  const semanaAtual = RECORDS.filter(r => r.auditado && r.setor === setorAlvo && mondayOf(r.date).getTime() === monday);
-  const pendentesSemana = RECORDS.filter(r => !r.auditado && r.setor === setorAlvo && mondayOf(r.date).getTime() === monday).length;
-  const semanaAnterior = RECORDS.filter(r => r.auditado && r.setor === setorAlvo && mondayOf(r.date).getTime() === monday - 7*86400000);
+/** Agrega os dados da Reunião de Vendas de uma semana (Vendas + Dupla).
+ *  Usado tanto pela tela quanto pelo modo apresentação. */
+function reuniaoData(monday){
+  const daSemana = (mon) => RECORDS.filter(r => SETORES_VENDAS.includes(r.setor) && mondayOf(r.date).getTime() === mon);
+  const semanaAtual = daSemana(monday).filter(r=>r.auditado);
+  const pendentesSemana = RECORDS.filter(r => !r.auditado && SETORES_VENDAS.includes(r.setor) && mondayOf(r.date).getTime() === monday).length;
+  const semanaAnterior = daSemana(monday - 7*86400000).filter(r=>r.auditado);
 
   const n = semanaAtual.length;
   const custoTotal = semanaAtual.reduce((a,r)=>a+(r.custo||0),0);
@@ -1286,79 +1845,271 @@ function renderReuniao(main){
   const deltaN = nAnt ? Math.round((n-nAnt)/nAnt*100) : null;
   const deltaCusto = custoAnt ? Math.round((custoTotal-custoAnt)/custoAnt*100) : null;
 
-  const nav = `
-    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:22px">
-      <button class="iconbtn" id="semanaPrev" title="Semana anterior">←</button>
-      <div style="text-align:center">
-        <div style="font-size:12px;color:#8A9099;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Semana</div>
-        <div style="font-size:18px;font-weight:800">${fmtDM(new Date(monday))} a ${fmtDM(sunday)}</div>
-      </div>
-      <button class="iconbtn" id="semanaNext" title="Próxima semana">→</button>
-    </div>
-  `;
-
-  if(n === 0){
-    main.innerHTML = nav + `<div class="card empty"><div class="e-title">Nenhum erro auditado do Escritório nesta semana</div><div class="e-sub">${pendentesSemana>0 ? pendentesSemana+' caso(s) ainda pendente(s) de auditoria nesta semana.' : 'Use as setas pra navegar até uma semana com dado, ou é uma boa notícia mesmo.'}</div></div>`;
-    document.getElementById('semanaPrev').addEventListener('click', ()=>{ state.semanaReuniao -= 7*86400000; render(); });
-    document.getElementById('semanaNext').addEventListener('click', ()=>{ state.semanaReuniao += 7*86400000; render(); });
-    return;
-  }
-
   const causaMap = {};
   semanaAtual.forEach(r=>{ const k = r.subproblema || 'Não classificado'; if(!causaMap[k]) causaMap[k] = {nome:k, n:0, custo:0}; causaMap[k].n++; causaMap[k].custo += (r.custo||0); });
-  const causasTop = Object.values(causaMap).sort((a,b)=>b.custo-a.custo).slice(0,3);
-  const causaDestaque = causasTop[0];
+  const causasTop = Object.values(causaMap).sort((a,b)=>b.custo-a.custo);
+
+  const respMap = {};
+  semanaAtual.forEach(r=>{ const k = r.responsavel || 'Não informado'; if(!respMap[k]) respMap[k]={nome:k, n:0, custo:0}; respMap[k].n++; respMap[k].custo += (r.custo||0); });
+  const respTop = Object.values(respMap).sort((a,b)=>b.custo-a.custo);
 
   const casosOrdenados = semanaAtual.slice().sort((a,b)=>b.custo-a.custo);
 
+  return { monday, sunday:sundayOf(monday), semanaAtual, pendentesSemana, n, custoTotal, deltaN, deltaCusto, causasTop, respTop, casosOrdenados };
+}
+
+function renderReuniao(main){
+  const d = reuniaoData(state.semanaReuniao);
+  const { monday, sunday, n, custoTotal, deltaN, deltaCusto, causasTop, respTop, casosOrdenados, pendentesSemana } = d;
+
+  const nav = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="iconbtn" id="semanaPrev" title="Semana anterior">←</button>
+        <div style="text-align:center">
+          <div style="font-size:12px;color:#8A9099;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Semana</div>
+          <div style="font-size:18px;font-weight:800">${fmtDM(new Date(monday))} a ${fmtDM(sunday)}</div>
+        </div>
+        <button class="iconbtn" id="semanaNext" title="Próxima semana">→</button>
+      </div>
+      <button class="btn btn-present" id="btnApresentar" ${n===0?'disabled style="opacity:.5"':''}>▶ Iniciar apresentação</button>
+    </div>
+  `;
+
+  const bindNav = ()=>{
+    document.getElementById('semanaPrev').addEventListener('click', ()=>{ state.semanaReuniao -= 7*86400000; render(); });
+    document.getElementById('semanaNext').addEventListener('click', ()=>{ state.semanaReuniao += 7*86400000; render(); });
+    const bap = document.getElementById('btnApresentar'); if(bap && n>0) bap.addEventListener('click', ()=> openPresentation(state.semanaReuniao));
+  };
+
+  if(n === 0){
+    main.innerHTML = nav + `<div class="card empty"><div class="e-title">Nenhum erro de Vendas auditado nesta semana</div><div class="e-sub">${pendentesSemana>0 ? pendentesSemana+' caso(s) ainda pendente(s) de auditoria nesta semana.' : 'Use as setas pra navegar até uma semana com dado, ou é uma boa notícia mesmo.'}</div></div>`;
+    bindNav();
+    return;
+  }
+
+  const causaDestaque = causasTop[0];
+  const comFoto = casosOrdenados.filter(r=>parseFotos(r.foto).length).length;
   const arrow = (delta) => delta===null ? '' : delta>0 ? `<span style="color:#A62A23">▲ ${delta}% vs semana anterior</span>` : delta<0 ? `<span style="color:#15703D">▼ ${Math.abs(delta)}% vs semana anterior</span>` : `<span style="color:#8A9099">igual à semana anterior</span>`;
+  const maxCustoResp = respTop.length ? respTop[0].custo : 0;
 
   main.innerHTML = nav + `
-    ${pendentesSemana>0 ? `<div class="banner red"><span class="b-ic">!</span><div><div class="b-title">${pendentesSemana} caso(s) do Escritório ainda pendente(s) de auditoria nesta semana</div><div class="b-text">Não entram nos números abaixo. Vale fechar antes da reunião.</div></div></div>` : ''}
+    ${pendentesSemana>0 ? `<div class="banner red"><span class="b-ic">!</span><div><div class="b-title">${pendentesSemana} caso(s) de Vendas ainda pendente(s) de auditoria nesta semana</div><div class="b-text">Não entram nos números abaixo. Vale fechar antes da reunião.</div></div></div>` : ''}
 
-    <div class="grid grid-2">
-      <div class="kpi-dark"><div class="k-label">Erros do Escritório na semana</div><div class="k-value">${n}</div><div class="k-foot" style="color:#fff">${arrow(deltaN)}</div></div>
-      <div class="kpi-accent"><div class="k-label">Custo total da semana</div><div class="k-value">${brl(custoTotal)}</div><div class="k-foot">${arrow(deltaCusto)}</div></div>
+    <div class="metrics">
+      <div class="metric hero"><div class="m-top"><span class="m-ic">▦</span><span class="m-label">Erros de Vendas na semana</span></div><div class="m-value">${n}</div><div class="m-foot">${arrow(deltaN)}</div></div>
+      <div class="metric"><div class="m-top"><span class="m-ic ic-amber">◈</span><span class="m-label">Custo total da semana</span></div><div class="m-value">${brl(custoTotal)}</div><div class="m-foot">${arrow(deltaCusto)}</div></div>
+      <div class="metric"><div class="m-top"><span class="m-ic ic-green">◆</span><span class="m-label">Causa em destaque</span></div><div class="m-value sm">${causaDestaque.nome}</div><div class="m-foot">${causaDestaque.n} caso(s) · ${brl(causaDestaque.custo)}</div></div>
+      <div class="metric"><div class="m-top"><span class="m-ic ic-blue">◉</span><span class="m-label">Casos com foto</span></div><div class="m-value">${comFoto}<span style="font-size:16px;color:#8A9099;font-weight:600"> / ${n}</span></div><div class="m-foot">aparecem com imagem na apresentação</div></div>
     </div>
 
-    <div class="card" style="margin-bottom:14px;text-align:center;padding:28px 20px">
-      <div style="font-size:12px;color:#8A9099;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Causa em destaque da semana</div>
-      <div style="font-size:30px;font-weight:800;margin-top:8px">${causaDestaque.nome}</div>
-      <div style="font-size:13.5px;color:#8A9099;margin-top:6px">${causaDestaque.n} ocorrência(s) · ${brl(causaDestaque.custo)}</div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <h3>Top 3 causas da semana</h3>
-      <div class="card-sub">Ordenado por custo — é onde uma ação de processo rende mais.</div>
-      <div style="display:flex;flex-direction:column;gap:0;margin-top:10px">
-        ${causasTop.map((c,i)=>`<div class="legend-row"><span class="rank ${i===0?'top':''}">${i+1}</span><span style="margin-left:10px">${c.nome}</span><b style="margin-left:auto">${brl(c.custo)}</b><span style="color:#8A9099;margin-left:12px;min-width:70px;text-align:right">${c.n} caso(s)</span></div>`).join('')}
+    <div class="grid grid-2col">
+      <div class="card">
+        <h3>Top causas da semana</h3>
+        <div class="card-sub">Ordenado por custo — onde uma ação de processo rende mais.</div>
+        <div style="margin-top:10px">
+          ${causasTop.slice(0,5).map((c,i)=>`<div class="legend-row"><span class="rank ${i===0?'top':''}">${i+1}</span><span style="margin-left:10px">${esc(c.nome)}</span><b style="margin-left:auto">${brl(c.custo)}</b><span style="color:#8A9099;margin-left:12px;min-width:70px;text-align:right">${c.n} caso(s)</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <h3>Por vendedor / responsável</h3>
+        <div class="card-sub">Quem concentra o custo da semana. Use como mapa, não como julgamento isolado.</div>
+        <div style="margin-top:10px">
+          ${respTop.slice(0,6).map((c,i)=>`<div class="legend-row"><span class="rank ${i===0?'top':''}">${i+1}</span><span style="margin-left:10px;flex:1">${esc(c.nome)}</span><div class="mbar" style="max-width:150px;margin:0 10px"><div class="track"><div class="fill" style="width:${maxCustoResp?Math.max(3,c.custo/maxCustoResp*100):0}%;background:#2A6FDB"></div></div></div><b style="min-width:78px;text-align:right">${brl(c.custo)}</b></div>`).join('')}
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h3>Casos da semana — Escritório</h3>
-      <div class="card-sub">Ordenado por custo. Clique numa linha pra ver o caso completo.</div>
+      <h3>Casos da semana — Vendas</h3>
+      <div class="card-sub">Ordenado por custo. Clique numa linha pra ver o caso completo. A miniatura mostra se o caso tem foto.</div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>ID</th><th>Responsável</th><th>Cliente / Card</th><th>Causa</th><th class="num">Custo</th><th>Tipo de resolução</th></tr></thead>
-        <tbody>${casosOrdenados.map(r=>`<tr class="clickable" data-id="${r.id}">
-            <td><span class="idchip" data-copy="${r.idVenda}">#${r.idVenda}</span></td>
-            <td style="font-weight:600">${r.responsavel || '—'}</td>
-            <td>${r.nomeCard}</td>
-            <td>${r.subproblema || '—'}</td>
+        <thead><tr><th>Foto</th><th>ID</th><th>Responsável</th><th>Cliente / Card</th><th>Causa</th><th class="num">Custo</th><th>Tipo de resolução</th></tr></thead>
+        <tbody>${casosOrdenados.map(r=>{ const fs=parseFotos(r.foto); return `<tr class="clickable" data-id="${r.id}">
+            <td>${fs.length ? `<img class="thumb-sm" src="${fotoSrc(fs[0])}" alt="" loading="lazy">` : `<span style="color:#C1C6CE;font-size:11px">sem foto</span>`}</td>
+            <td><span class="idchip" data-copy="${esc(r.idVenda)}">#${esc(r.idVenda)}</span></td>
+            <td style="font-weight:600">${esc(r.responsavel) || '—'}</td>
+            <td>${esc(r.nomeCard)}</td>
+            <td>${esc(r.subproblema) || '—'}</td>
             <td class="num">${brl(r.custo)}</td>
-            <td>${r.tipoResolucao || '—'}</td>
-          </tr>`).join('')}</tbody>
+            <td>${esc(r.tipoResolucao) || '—'}</td>
+          </tr>`; }).join('')}</tbody>
       </table></div>
     </div>
   `;
 
-  document.getElementById('semanaPrev').addEventListener('click', ()=>{ state.semanaReuniao -= 7*86400000; render(); });
-  document.getElementById('semanaNext').addEventListener('click', ()=>{ state.semanaReuniao += 7*86400000; render(); });
+  bindNav();
   document.querySelectorAll('.idchip').forEach(el=>{
     el.addEventListener('click', (e)=>{ e.stopPropagation(); navigator.clipboard?.writeText(el.dataset.copy); el.textContent='Copiado!'; setTimeout(()=>{ el.textContent = '#'+el.dataset.copy; },900); });
   });
   document.querySelectorAll('tr.clickable').forEach(tr=>{ tr.addEventListener('click', ()=> openCaso(Number(tr.dataset.id))); });
   if(CASO_ATUAL!==null) highlightRow(CASO_ATUAL);
+}
+
+/* ================= MODO APRESENTAÇÃO (tela cheia, gerado da semana) ================= */
+let PRESENT = { slides:[], idx:0 };
+
+// Teclado do modo apresentação: ← → navegam, Esc/espaço saem/avançam.
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('presentRoot')) return;
+  if(e.key==='Escape'){ e.preventDefault(); closePresent(); }
+  else if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); presentGoto(PRESENT.idx+1); }
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); presentGoto(PRESENT.idx-1); }
+}, true);
+
+function buildSlides(d){
+  const slides = [];
+  const periodo = `${fmtDM(new Date(d.monday))} a ${fmtDM(d.sunday)}`;
+  // 1) Capa
+  slides.push({ type:'capa', periodo });
+  // 2) Resumo (KPIs)
+  slides.push({ type:'resumo' });
+  // 3) Top causas
+  if(d.causasTop.length) slides.push({ type:'causas' });
+  // 4) Ranking de vendedores
+  if(d.respTop.length) slides.push({ type:'ranking' });
+  // 5) Principais casos (até 8, priorizando os que têm foto entre os de maior custo)
+  d.casosOrdenados.slice(0,8).forEach((r,i)=> slides.push({ type:'caso', r, pos:i+1 }));
+  // 6) Fechamento
+  slides.push({ type:'fim' });
+  return slides;
+}
+
+function openPresentation(monday){
+  const d = reuniaoData(monday);
+  if(d.n === 0) return;
+  PRESENT = { slides: buildSlides(d), idx:0, d };
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="present" id="presentRoot">
+      <div class="present-top">
+        <span class="pt-badge">E</span>
+        <span class="pt-brand">SeuBoné <span>· Reunião de Vendas</span></span>
+        <span class="pt-spacer"></span>
+        <span class="pt-meta">${fmtDM(new Date(d.monday))} – ${fmtDM(d.sunday)}</span>
+        <button class="present-x" id="presentClose" title="Sair (Esc)">✕</button>
+      </div>
+      <div class="slide" id="presentSlide"></div>
+      <div class="present-nav">
+        <button class="pn-btn" id="pnPrev" title="Anterior (←)">‹</button>
+        <div class="present-dots" id="pnDots"></div>
+        <span class="pn-count" id="pnCount"></span>
+        <button class="pn-btn" id="pnNext" title="Próximo (→)">›</button>
+      </div>
+    </div>`;
+  document.getElementById('presentClose').addEventListener('click', closePresent);
+  document.getElementById('pnPrev').addEventListener('click', ()=>presentGoto(PRESENT.idx-1));
+  document.getElementById('pnNext').addEventListener('click', ()=>presentGoto(PRESENT.idx+1));
+  // avança clicando na metade direita do slide, volta na esquerda
+  document.getElementById('presentSlide').addEventListener('click', (e)=>{
+    if(e.target.closest('.case-thumbs')) return; // trocar foto não navega
+    const r = e.currentTarget.getBoundingClientRect();
+    presentGoto(PRESENT.idx + ((e.clientX - r.left) < r.width*0.35 ? -1 : 1));
+  });
+  try{ document.getElementById('presentRoot').requestFullscreen?.(); }catch(e){}
+  presentGoto(0);
+}
+
+function closePresent(){
+  const root = document.getElementById('modalRoot');
+  if(root) root.innerHTML = '';
+  try{ if(document.fullscreenElement) document.exitFullscreen?.(); }catch(e){}
+  PRESENT = { slides:[], idx:0 };
+}
+
+function presentGoto(i){
+  if(!PRESENT.slides.length) return;
+  PRESENT.idx = Math.max(0, Math.min(PRESENT.slides.length-1, i));
+  const slide = PRESENT.slides[PRESENT.idx];
+  document.getElementById('presentSlide').innerHTML = slideHTML(slide, PRESENT.d);
+  const total = PRESENT.slides.length;
+  document.getElementById('pnCount').textContent = (PRESENT.idx+1)+' / '+total;
+  document.getElementById('pnPrev').disabled = PRESENT.idx===0;
+  document.getElementById('pnNext').disabled = PRESENT.idx===total-1;
+  document.getElementById('pnDots').innerHTML = PRESENT.slides.map((_,k)=>`<span class="d ${k===PRESENT.idx?'on':''}" data-k="${k}"></span>`).join('');
+  document.querySelectorAll('#pnDots .d').forEach(el=> el.addEventListener('click', ()=>presentGoto(Number(el.dataset.k))));
+  // troca de foto no slide de caso
+  document.querySelectorAll('.case-thumbs img').forEach(img=> img.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const big = document.getElementById('casePhotoBig'); if(big) big.src = img.dataset.full;
+    document.querySelectorAll('.case-thumbs img').forEach(t=>t.classList.remove('on')); img.classList.add('on');
+  }));
+}
+
+function arrowHTML(delta){
+  if(delta===null) return '<span style="color:#9AA0A8">sem base da semana anterior</span>';
+  if(delta>0) return `<span style="color:#FF8A80">▲ ${delta}% vs semana anterior</span>`;
+  if(delta<0) return `<span style="color:#8FE3B0">▼ ${Math.abs(delta)}% vs semana anterior</span>`;
+  return '<span style="color:#9AA0A8">igual à semana anterior</span>';
+}
+
+function slideHTML(s, d){
+  if(s.type==='capa') return `<div class="slide-inner" style="text-align:center">
+      <div class="sl-kicker">Reunião de Vendas · Erros da Semana</div>
+      <div class="sl-title" style="font-size:56px;margin-top:18px">Erros da semana<br>${s.periodo}</div>
+      <div class="sl-sub">${d.n} caso(s) auditado(s) · ${brl(d.custoTotal)} em custo · foco em aprendizado, não em culpa</div>
+    </div>`;
+
+  if(s.type==='resumo') return `<div class="slide-inner">
+      <div class="sl-kicker">Resumo da semana</div>
+      <div class="sl-title" style="font-size:36px;margin-bottom:26px">Como foi a semana</div>
+      <div class="sl-kpis">
+        <div class="sl-kpi"><div class="k-l">Erros auditados</div><div class="k-v">${d.n}</div><div class="k-f">${arrowHTML(d.deltaN)}</div></div>
+        <div class="sl-kpi"><div class="k-l">Custo total</div><div class="k-v" style="color:#FFC400">${brl(d.custoTotal)}</div><div class="k-f">${arrowHTML(d.deltaCusto)}</div></div>
+        <div class="sl-kpi"><div class="k-l">Causa em destaque</div><div class="k-v" style="font-size:26px;line-height:1.15">${d.causasTop[0].nome}</div><div class="k-f">${d.causasTop[0].n} caso(s) · ${brl(d.causasTop[0].custo)}</div></div>
+      </div>
+    </div>`;
+
+  if(s.type==='causas') return `<div class="slide-inner">
+      <div class="sl-kicker">Onde os erros se concentram</div>
+      <div class="sl-title" style="font-size:36px">Principais causas da semana</div>
+      <div class="present-rank">
+        ${d.causasTop.slice(0,6).map((c,i)=>`<div class="pr-row"><span class="pr-rk ${i===0?'top':''}">${i+1}</span><span class="pr-name">${esc(c.nome)}</span><span class="pr-sub">${c.n} caso(s)</span><span class="pr-val">${brl(c.custo)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  if(s.type==='ranking'){ const max = d.respTop[0].custo || 1; return `<div class="slide-inner">
+      <div class="sl-kicker">Custo por vendedor</div>
+      <div class="sl-title" style="font-size:36px">Ranking da semana</div>
+      <div class="present-rank">
+        ${d.respTop.slice(0,7).map((c,i)=>`<div class="pr-row"><span class="pr-rk ${i===0?'top':''}">${i+1}</span><span class="pr-name">${esc(c.nome)}</span><div class="pr-track"><div class="pr-fill" style="width:${Math.max(3,c.custo/max*100)}%;background:${i===0?'#FFC400':'#2A6FDB'}"></div></div><span class="pr-val">${brl(c.custo)}</span></div>`).join('')}
+      </div>
+    </div>`; }
+
+  if(s.type==='caso'){
+    const r = s.r; const fs = parseFotos(r.foto);
+    const photo = fs.length
+      ? `<img id="casePhotoBig" src="${fotoSrc(fs[0])}" alt="Foto do caso">`
+      : `<div class="noimg"><span class="ic">▦</span><div>Sem foto neste caso</div></div>`;
+    const thumbs = fs.length>1 ? `<div class="case-thumbs">${fs.map((u,i)=>`<img src="${fotoSrc(u)}" data-full="${fotoSrc(u)}" class="${i===0?'on':''}" alt="">`).join('')}</div>` : '';
+    return `<div class="slide-inner case-slide">
+      <div>
+        <div class="case-photo">${photo}</div>
+        ${thumbs}
+      </div>
+      <div class="case-info">
+        <div class="sl-kicker">Caso ${s.pos} · ${esc(r.tipoResolucao) || 'Sem classificação'}</div>
+        <div class="ci-cause">${esc(r.subproblema) || 'Não classificado'}</div>
+        <div class="ci-client">${esc(r.nomeCard)} · #${esc(r.idVenda)}</div>
+        <div class="ci-tags">
+          <div class="ci-tag"><span>Responsável</span> <b>${esc(r.responsavel) || '—'}</b></div>
+          <div class="ci-tag"><span>Setor</span> <b>${esc(r.setor) || '—'}</b></div>
+          ${r.tipoProduto?`<div class="ci-tag"><span>Produto</span> <b>${esc(r.tipoProduto)}</b></div>`:''}
+          ${r.empresa?`<div class="ci-tag"><span>Linha</span> <b>${esc(r.empresa)}</b></div>`:''}
+        </div>
+        <div class="ci-cost">${brl(r.custo)} <small>de custo</small></div>
+        ${r.descricao?`<div class="ci-desc">${String(r.descricao).replace(/</g,'&lt;')}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  if(s.type==='fim') return `<div class="slide-inner" style="text-align:center">
+      <div class="sl-kicker">Fechamento</div>
+      <div class="sl-title" style="font-size:48px;margin-top:16px">${d.n} erro(s) · ${brl(d.custoTotal)}</div>
+      <div class="sl-sub">Cada caso aqui é uma chance de ajustar o processo.<br>Combinar as ações e seguir. Obrigado, time! 🧢</div>
+    </div>`;
+
+  return `<div class="slide-inner"></div>`;
 }
 
 /* ---------- Roteamento por hash (#/casos/:id) + drawer lateral ---------- */
@@ -1411,7 +2162,7 @@ document.addEventListener('keydown', (e)=>{
 
 /** Monta o conteúdo interno do drawer (cabeçalho + corpo + rodapé). */
 function drawerInnerHTML(r){
-  const editable = !r.auditado;
+  const editable = !r.auditado && podeAuditar();
   const fieldOrSel = (opts, current) => opts.map(o=>`<option ${o===current?'selected':''}>${o}</option>`).join('');
   const resOptions = RESOLUCAO_TABLE.map(o=>`<option value="${o.tipo}" ${o.tipo===r.tipoResolucao?'selected':''}>${o.tipo}</option>`).join('');
   const causasConhecidas = Array.from(new Set(RECORDS.map(x=>x.subproblema).filter(Boolean)));
@@ -1429,9 +2180,9 @@ function drawerInnerHTML(r){
         ${pos ? `<span style="font-size:11.5px;color:#8A9099;margin-left:4px;white-space:nowrap">${pos}</span>` : ''}
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.nomeCard}</div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.nomeCard)}</div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
-          <span class="idchip" id="idCopy" data-copy="${r.idVenda}">#${r.idVenda}</span>
+          <span class="idchip" id="idCopy" data-copy="${esc(r.idVenda)}">#${esc(r.idVenda)}</span>
           ${statusBadge(r)}
           ${!USING_DEMO ? `<span class="badge pill-grey">linha ${r.id} na planilha</span>` : ''}
           ${r.linkPedido ? `<a href="${r.linkPedido}" target="_blank" class="badge" style="background:#EEF0F3;color:#565C64;text-decoration:none">Abrir pedido ↗</a>` : ''}
@@ -1441,36 +2192,38 @@ function drawerInnerHTML(r){
     </div>
     <div class="drawer-body">
       <div class="sec-title">Status do caso</div>
-      <div class="status-seg" style="margin-bottom:18px">${STATUS_DEF.map(sd=>`<button class="stbtn ${effectiveStatus(r)===sd.key?'on':''}" data-status="${sd.key}" style="--c:${sd.cor}">${sd.label}</button>`).join('')}</div>
+      ${podeAuditar()
+        ? `<div class="status-seg" style="margin-bottom:18px">${STATUS_DEF.map(sd=>`<button class="stbtn ${effectiveStatus(r)===sd.key?'on':''}" data-status="${sd.key}" style="--c:${sd.cor}">${sd.label}</button>`).join('')}</div>`
+        : `<div style="margin-bottom:18px">${statusBadge(r)}</div>`}
       <div class="sec-title">Dados do registro</div>
       <div class="field-grid" style="margin-bottom:16px">
         <div class="field"><label>Data de registro</label><div class="readonly-block">${fmtDate(r.date)}</div></div>
-        <div class="field"><label>Quem cadastrou o erro</label><div class="readonly-block">${r.quemCadastrou}</div></div>
+        <div class="field"><label>Quem cadastrou o erro</label><div class="readonly-block">${esc(r.quemCadastrou)}</div></div>
       </div>
-      <div class="field" style="margin-bottom:20px"><label>Descrição do erro</label><div class="readonly-block" style="font-style:italic">${r.descricao || '—'}</div></div>
+      <div class="field" style="margin-bottom:20px"><label>Descrição do erro</label><div class="readonly-block" style="font-style:italic">${esc(r.descricao) || '—'}</div></div>
+      ${(()=>{ const fs=parseFotos(r.foto); return fs.length ? `<div class="field" style="margin-bottom:20px"><label>Fotos do erro (${fs.length})</label><div style="display:flex;flex-wrap:wrap;gap:9px">${fs.map(u=>`<a href="${fotoSrc(u)}" target="_blank" title="Abrir imagem"><img class="thumb" style="width:88px;height:88px" src="${fotoSrc(u)}" alt="" loading="lazy"></a>`).join('')}</div></div>` : ''; })()}
 
-      <div class="sec-title">Auditoria ${editable ? '<span class="badge pill-amber">preencher agora</span>' : '<span class="badge pill-grey">já registrada</span>'}</div>
+      <div class="sec-title">Auditoria ${editable ? '<span class="badge pill-amber">preencher agora</span>' : (r.auditado ? '<span class="badge pill-grey">já registrada</span>' : '<span class="badge pill-grey">somente leitura</span>')}</div>
       <form id="formAuditoria">
         <div class="field-grid" style="margin-bottom:14px">
-          <div class="field"><label>Setor do problema</label>${editable ? `<select name="setor">${fieldOrSel(SETORES_PADRAO, r.setor)}</select>` : `<div class="readonly-block">${r.setor||'—'}</div>`}</div>
-          <div class="field"><label>Culpa de:</label>${editable ? `<select name="culpaDe">${fieldOrSel(CULPADOS_PADRAO, r.culpaDe)}</select>` : `<div class="readonly-block">${r.culpaDe||'—'}</div>`}</div>
+          <div class="field"><label>Setor do problema</label>${editable ? `<select name="setor">${fieldOrSel(SETOR_OPCOES, r.setor)}</select>` : `<div class="readonly-block">${esc(r.setor)||'—'}</div>`}</div>
+          <div class="field"><label>Responsável</label>${editable ? `<input name="responsavel" value="${esc(r.responsavel)}" placeholder="Nome do consultor ou 'Produção (Fábrica)'">` : `<div class="readonly-block">${esc(r.responsavel)||'—'}</div>`}</div>
         </div>
         <div class="field-grid" style="margin-bottom:14px">
-          <div class="field"><label>Responsável</label>${editable ? `<input name="responsavel" value="${r.responsavel||''}" placeholder="Nome do consultor ou 'Produção (Fábrica)'">` : `<div class="readonly-block">${r.responsavel||'—'}</div>`}</div>
-          <div class="field"><label>Empresa</label>${editable ? `<select name="empresa"><option value="ACM" ${r.empresa==='ACM'?'selected':''}>ACM</option><option value="ITC" ${r.empresa==='ITC'?'selected':''}>ITC</option></select>` : `<div class="readonly-block">${r.empresa||'—'}</div>`}</div>
+          <div class="field"><label>Empresa</label>${editable ? `<select name="empresa"><option value="">—</option><option value="ACM" ${r.empresa==='ACM'?'selected':''}>ACM</option><option value="ITC" ${r.empresa==='ITC'?'selected':''}>ITC</option></select>` : `<div class="readonly-block">${esc(r.empresa)||'—'}</div>`}</div>
+          <div class="field"><label>Tipo de produto</label>${editable ? `<input name="tipoProduto" list="prodList" value="${esc(r.tipoProduto)}">` : `<div class="readonly-block">${esc(r.tipoProduto)||'—'}</div>`}</div>
         </div>
         <div class="field-grid" style="margin-bottom:14px">
-          <div class="field"><label>Tipo de produto</label>${editable ? `<input name="tipoProduto" list="prodList" value="${r.tipoProduto||''}">` : `<div class="readonly-block">${r.tipoProduto||'—'}</div>`}</div>
-          <div class="field"><label>Tipo de problema (causa)</label>${editable ? `<input name="tipoProblema" list="subList" value="${r.subproblema||''}" placeholder="Ex: Folha errada, Tonalidade do Silk...">` : `<div class="readonly-block">${r.subproblema||'—'}</div>`}</div>
-          <datalist id="subList">${causasConhecidas.map(s=>`<option value="${s}">`).join('')}</datalist>
-          <datalist id="prodList">${TIPOS_PRODUTO.map(s=>`<option value="${s}">`).join('')}</datalist>
-        </div>
-        <div class="field-grid" style="margin-bottom:14px">
+          <div class="field"><label>Tipo de problema (causa)</label>${editable ? `<input name="tipoProblema" list="subList" value="${esc(r.subproblema)}" placeholder="Ex: Folha errada, Tonalidade do Silk...">` : `<div class="readonly-block">${esc(r.subproblema)||'—'}</div>`}</div>
           <div class="field"><label>Quantidade de produtos errados</label>${editable ? `<input type="number" name="qtd" value="${r.qtd ?? ''}" min="0">` : `<div class="readonly-block">${r.qtd ?? '—'}</div>`}</div>
-          <div class="field"><label>Que fim teve o pedido?</label>${editable ? `<select name="queFim">${fieldOrSel(QUE_FIM_LIST, r.queFim)}</select>` : `<div class="readonly-block">${r.queFim||'—'}</div>`}</div>
+          <datalist id="subList">${causasConhecidas.map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+          <datalist id="prodList">${TIPOS_PRODUTO.map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label>Que fim teve o pedido?</label>${editable ? `<select name="queFim">${fieldOrSel(QUE_FIM_LIST, r.queFim)}</select>` : `<div class="readonly-block">${esc(r.queFim)||'—'}</div>`}
         </div>
         <div class="field-grid" style="margin-bottom:6px">
-          <div class="field"><label>Tipo de resolução</label>${editable ? `<select name="tipoResolucao" id="selResolucao">${resOptions}</select>` : `<div class="readonly-block">${r.tipoResolucao||'—'}</div>`}</div>
+          <div class="field"><label>Tipo de resolução</label>${editable ? `<select name="tipoResolucao" id="selResolucao">${resOptions}</select>` : `<div class="readonly-block">${esc(r.tipoResolucao)||'—'}</div>`}</div>
           <div class="field"><label>Custo do erro (R$)</label>${editable ? `<input type="number" name="custo" id="inpCusto" value="${r.custo ?? ''}" min="0">` : `<div class="readonly-block">${brl(r.custo)}</div>`}</div>
         </div>
         <div class="logica-box" id="logicaBox">${r.tipoResolucao ? getRes(r.tipoResolucao).logica : 'Selecione o tipo de resolução.'}</div>
@@ -1540,7 +2293,7 @@ function renderDrawer(id){
 
 /** Liga os eventos do drawer (fechar, navegar, copiar id, salvar auditoria). */
 function wireDrawer(r){
-  const editable = !r.auditado;
+  const editable = !r.auditado && podeAuditar();
   const $ = (i)=>document.getElementById(i);
   carregarHistorico(r.id);
   $('drwClose').addEventListener('click', ()=>closeDrawer(false));
@@ -1559,29 +2312,32 @@ function wireDrawer(r){
       const tipoResolucao = fd.get('tipoResolucao');
       clearFieldErrs($('formAuditoria'));
       if(!tipoResolucao){ markFieldErr(selRes, 'Selecione o tipo de resolução'); selRes.focus(); return; }
+      const custoNum = Number(fd.get('custo')||0), qtdNum = Number(fd.get('qtd')||0);
+      const msg = $('saveMsg');
+      if(isNaN(custoNum) || custoNum<0){ markFieldErr($('inpCusto'), 'Custo inválido'); msg.textContent='Custo inválido.'; return; }
+      if(isNaN(qtdNum) || qtdNum<0){ markFieldErr($('formAuditoria').querySelector('[name="qtd"]'), 'Quantidade inválida'); msg.textContent='Quantidade inválida.'; return; }
       const fields = {
-        culpaDe: fd.get('culpaDe'), setor: fd.get('setor'), responsavel: fd.get('responsavel'),
+        setor: fd.get('setor'), responsavel: fd.get('responsavel'),
         empresa: fd.get('empresa'), tipoProduto: fd.get('tipoProduto'), tipoProblema: fd.get('tipoProblema'),
-        qtd: Number(fd.get('qtd')||0), custo: Number(fd.get('custo')||0), queFim: fd.get('queFim'), tipoResolucao,
+        qtd: qtdNum, custo: custoNum, queFim: fd.get('queFim'), tipoResolucao,
       };
       const btn = $('btnSalvar');
-      const msg = $('saveMsg');
       btn.disabled = true; msg.textContent = USING_DEMO ? 'Salvando (demo)…' : 'Gravando na planilha…';
       try{
         if(!USING_DEMO){
-          // Apps Script + fetch de outro domínio costuma travar em "Failed to fetch" no modo padrão
-          // (CORS no redirecionamento interno do Google). No-cors evita o bloqueio, mas não deixa
-          // ler a resposta — por isso confirmamos com uma atualização em segundo plano logo depois.
+          // no-cors evita o bloqueio de CORS do Apps Script, mas não deixa ler a resposta —
+          // por isso confirmamos relendo a planilha logo depois (verificarGravacao).
           await fetch(CONFIG.API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
             body: JSON.stringify({ action:'audit', rowIndex: r.id, fields, usuario:getUsuario() }) });
         }
-        Object.assign(r, { setor:fields.setor, culpaDe:fields.culpaDe, responsavel:fields.responsavel, empresa:fields.empresa,
+        Object.assign(r, { setor:fields.setor, responsavel:fields.responsavel, empresa:fields.empresa,
           tipoProduto:fields.tipoProduto, subproblema:fields.tipoProblema, qtd:fields.qtd, custo:fields.custo,
           queFim:fields.queFim, tipoResolucao:fields.tipoResolucao, auditado:true, status:'resolvido' });
         derivarListasDinamicas(); initFilterOptions();
+        const rowIndex = r.id;
         closeDrawer(false); render();
         toast('Auditoria salva', true);
-        if(!USING_DEMO) setTimeout(()=>{ refreshData(true).catch(()=>{}); }, 1800);
+        if(!USING_DEMO) setTimeout(()=>verificarGravacao(()=>{ const x=RECORDS.find(v=>v.id===rowIndex); return x && x.auditado; }, 'auditoria do caso'), 1800);
       } catch(err){
         msg.textContent = 'Erro de rede: ' + err.message + ' — confira a conexão e tente de novo.'; btn.disabled = false;
       }
@@ -1613,9 +2369,9 @@ function renderPalette(q){
   const listEl = document.getElementById('palList'); if(!listEl) return;
   if(!PAL_RESULTS.length){ listEl.innerHTML = `<div class="pal-empty">Nada encontrado${q?` para “${q}”`:''}.</div>`; return; }
   listEl.innerHTML = PAL_RESULTS.map((r,i)=>`<div class="pal-item ${i===0?'sel':''}" data-idx="${i}">
-    <span class="pid">#${r.idVenda}</span>
-    <span class="pname">${r.nomeCard||'(sem nome)'}</span>
-    <span class="pmeta">${r.empresa||'—'} · ${r.setor||'s/ setor'}</span>
+    <span class="pid">#${esc(r.idVenda)}</span>
+    <span class="pname">${esc(r.nomeCard)||'(sem nome)'}</span>
+    <span class="pmeta">${esc(r.empresa)||'—'} · ${esc(r.setor)||'s/ setor'}</span>
     ${statusBadge(r)}
   </div>`).join('');
   listEl.querySelectorAll('.pal-item').forEach(it=>{
@@ -1696,33 +2452,31 @@ function openNovoCaso(){
               <div class="field"><label>Quem está cadastrando *</label><input type="text" name="quemCadastrou" id="nQuemCadastrou" list="cadastradorList" placeholder="Seu nome"></div>
               <div class="field"><label>Link do pedido (opcional)</label><input type="url" name="linkPedido" id="nLinkPedido" placeholder="https://..."></div>
             </div>
+            <div class="field" style="margin-bottom:14px">
+              <label>Fotos do erro (opcional)</label>
+              <div class="foto-drop" id="fotoDrop"><b>Clique para adicionar fotos</b> ou arraste aqui · aparecem na Reunião de Vendas</div>
+              <input type="file" id="fotoInput" accept="image/*" multiple style="display:none">
+              <div class="foto-prev" id="fotoPrev"></div>
+            </div>
 
-            <div class="sec-title" style="margin-top:20px">Classificação <span class="badge pill-grey">opcional</span></div>
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Setor do problema</label><select name="setor">${selOptions(SETORES)}</select></div>
-              <div class="field"><label>Culpa de:</label><select name="culpaDe">${selOptions(CULPADOS_PADRAO)}</select></div>
+            <div class="sec-title" style="margin-top:20px">Classificação <span class="badge pill-amber">obrigatório</span></div>
+            <div class="field setor-destaque" style="margin-bottom:14px">
+              <label>Setor do problema * <span class="badge pill-amber">alimenta a Reunião de Vendas</span></label>
+              <select name="setor">${selOptions(SETOR_OPCOES)}</select>
+              <div style="font-size:11.5px;color:#8A6A00;margin-top:6px">De qual área veio o problema. Marque <b>Vendas</b> ou <b>Dupla (Vendedor e Designer)</b> para o caso entrar na apresentação semanal do time.</div>
             </div>
             <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Responsável</label><input name="responsavel" list="respList" placeholder="Nome do consultor ou 'Produção (Fábrica)'"></div>
-              <div class="field"><label>Empresa / linha</label><input name="empresa" list="empList" placeholder="Ex: TUBA, SUPERNOVA..."></div>
-            </div>
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Tipo de produto</label><input name="tipoProduto" list="prodListNovo" placeholder="Ex: TRUCKER, NEW YORK..."></div>
-              <div class="field"><label>Tipo de problema (causa)</label><input name="tipoProblema" list="causaList" placeholder="Ex: Alinhamento, Qualidade do bordado..."></div>
+              <div class="field"><label>Responsável *</label><input name="responsavel" list="respList" placeholder="Nome do consultor ou 'Produção (Fábrica)'"></div>
+              <div class="field"><label>Tipo de problema (causa) *</label><input name="tipoProblema" list="causaList" placeholder="Ex: Alinhamento, Qualidade do bordado..."></div>
             </div>
             <div class="field-grid" style="margin-bottom:14px">
               <div class="field"><label>Subproblema (detalhe)</label><input name="subproblema" list="detList" placeholder="Detalhe granular do problema"></div>
               <div class="field"><label>Quantidade de produtos errados</label><input type="number" name="qtd" min="0" placeholder="0"></div>
             </div>
-            <div class="field-grid" style="margin-bottom:14px">
-              <div class="field"><label>Que fim teve o pedido?</label><select name="queFim">${selOptions(QUE_FIM_LIST)}</select></div>
-              <div class="field"><label>Tipo de resolução</label><select name="tipoResolucao" id="selResolucaoNovo">${resOptions}</select></div>
+            <div class="field" style="margin-bottom:6px">
+              <label>Tipo de resolução</label><select name="tipoResolucao" id="selResolucaoNovo">${resOptions}</select>
             </div>
-            <div class="field-grid" style="margin-bottom:6px">
-              <div class="field"><label>Custo do erro (R$)</label><input type="number" name="custo" min="0" placeholder="0"></div>
-              <div class="field"><label>Empresa emissora (ACM/ITC)</label><select name="empresaEmissora"><option value="">—</option><option value="ACM">ACM</option><option value="ITC">ITC</option></select></div>
-            </div>
-            <div class="logica-box" id="logicaBoxNovo">Selecione o tipo de resolução para ver a lógica de custo.</div>
+            <div class="logica-box" id="logicaBoxNovo">Empresa, tipo de produto, custo e "que fim teve o pedido" são preenchidos por quem faz a auditoria, em "Casos / Auditoria".</div>
           </form>
           <datalist id="cadastradorList">${cadastradores.map(c=>`<option value="${c}">`).join('')}</datalist>
           <datalist id="respList">${responsaveis.map(c=>`<option value="${c}">`).join('')}</datalist>
@@ -1748,17 +2502,61 @@ function openNovoCaso(){
   const selResNovo = document.getElementById('selResolucaoNovo');
   selResNovo.addEventListener('change', ()=>{ document.getElementById('logicaBoxNovo').textContent = selResNovo.value ? getRes(selResNovo.value).logica : 'Selecione o tipo de resolução para ver a lógica de custo.'; });
 
+  // --- Fotos: seleção + compressão + preview ---
+  const FOTOS = [];                       // data URLs (JPEG comprimido) prontas pra enviar
+  const fotoDrop = document.getElementById('fotoDrop');
+  const fotoInput = document.getElementById('fotoInput');
+  const fotoPrev = document.getElementById('fotoPrev');
+  const MAX_FOTOS = 6;
+  const renderPrev = ()=>{
+    fotoPrev.innerHTML = FOTOS.map((u,i)=>`<div class="fp"><img src="${u}" alt=""><button type="button" class="rm" data-i="${i}" title="Remover">✕</button></div>`).join('');
+    fotoPrev.querySelectorAll('.rm').forEach(b=> b.addEventListener('click', ()=>{ FOTOS.splice(Number(b.dataset.i),1); renderPrev(); }));
+    fotoDrop.innerHTML = FOTOS.length ? `<b>${FOTOS.length} foto(s) selecionada(s)</b> · clique para adicionar mais (até ${MAX_FOTOS})` : `<b>Clique para adicionar fotos</b> ou arraste aqui · aparecem na Reunião de Vendas`;
+  };
+  const addFiles = async (files)=>{
+    for(const f of Array.from(files)){
+      if(FOTOS.length>=MAX_FOTOS){ toast('Máximo de '+MAX_FOTOS+' fotos', false); break; }
+      try{ FOTOS.push(await comprimirImagem(f)); }catch(err){ toast('Foto ignorada: '+err.message, false); }
+    }
+    renderPrev();
+  };
+  fotoDrop.addEventListener('click', ()=>fotoInput.click());
+  fotoInput.addEventListener('change', ()=>{ addFiles(fotoInput.files); fotoInput.value=''; });
+  ['dragover','dragenter'].forEach(ev=> fotoDrop.addEventListener(ev, e=>{ e.preventDefault(); fotoDrop.style.borderColor='#FFC400'; }));
+  ['dragleave','drop'].forEach(ev=> fotoDrop.addEventListener(ev, e=>{ e.preventDefault(); fotoDrop.style.borderColor=''; }));
+  fotoDrop.addEventListener('drop', e=>{ if(e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files); });
+
   document.getElementById('btnCriarCaso').addEventListener('click', async ()=>{
     const fd = new FormData(document.getElementById('formNovo'));
     const g = (k)=> String(fd.get(k)||'').trim();
+    const btnCriar = document.getElementById('btnCriarCaso');
 
     const idVenda = g('idVenda'), nomeCard = g('nomeCard'), descricao = g('descricao'), quemCadastrou = g('quemCadastrou');
     const formNovo = document.getElementById('formNovo');
+    const msg = document.getElementById('saveMsgNovo');
     clearFieldErrs(formNovo);
-    const obrigatorios = [['idVenda','Informe o ID da venda'],['nomeCard','Informe o nome do card'],['descricao','Descreva o erro'],['quemCadastrou','Informe quem está cadastrando']];
+    const obrigatorios = [
+      ['idVenda','Informe o ID da venda'],['nomeCard','Informe o nome do card'],
+      ['descricao','Descreva o erro'],['quemCadastrou','Informe quem está cadastrando'],
+      ['setor','Escolha o setor do problema'],['responsavel','Informe o responsável'],
+      ['tipoProblema','Informe o tipo de problema'],
+    ];
     let primeiroErro = null;
     obrigatorios.forEach(([n,txt])=>{ const el=formNovo.querySelector('[name="'+n+'"]'); if(el && !el.value.trim()){ markFieldErr(el, txt); if(!primeiroErro) primeiroErro=el; } });
-    if(primeiroErro){ primeiroErro.focus(); return; }
+    if(primeiroErro){ primeiroErro.focus(); msg.textContent='Preencha os campos obrigatórios (*).'; return; }
+
+    // Quantidade não pode ser negativa.
+    const qtdNum = g('qtd') ? Number(g('qtd')) : '';
+    if(qtdNum!=='' && (isNaN(qtdNum) || qtdNum<0)){ markFieldErr(formNovo.querySelector('[name="qtd"]'), 'Quantidade inválida'); msg.textContent='Quantidade inválida.'; return; }
+
+    // Aviso de ID duplicado — não bloqueia (pode haver vários erros do mesmo pedido), mas confirma.
+    const dups = RECORDS.filter(r=>String(r.idVenda)===idVenda).length;
+    if(dups>0 && btnCriar.dataset.dupok!=='1'){
+      btnCriar.dataset.dupok='1';
+      msg.innerHTML = `<span style="color:#A62A23">Já existe ${dups} caso(s) com o ID <b>#${esc(idVenda)}</b>. Se for outro erro do mesmo pedido, clique de novo para confirmar.</span>`;
+      btnCriar.textContent='Registrar mesmo assim';
+      return;
+    }
 
     // Considera o caso já auditado quando a classificação mínima foi preenchida.
     const setor = g('setor'), tipoResolucao = g('tipoResolucao');
@@ -1766,40 +2564,48 @@ function openNovoCaso(){
 
     const fields = {
       idVenda, nomeCard, descricao, quemCadastrou, linkPedido: g('linkPedido'),
-      culpaDe: g('culpaDe'), setor, responsavel: g('responsavel'),
-      empresa: g('empresa') || g('empresaEmissora'),
-      tipoProduto: g('tipoProduto'), tipoProblema: g('tipoProblema'), subproblema: g('subproblema'),
-      qtd: g('qtd') ? Number(g('qtd')) : '', custo: g('custo') ? Number(g('custo')) : '',
-      queFim: g('queFim'), tipoResolucao,
+      setor, responsavel: g('responsavel'),
+      tipoProblema: g('tipoProblema'), subproblema: g('subproblema'),
+      qtd: qtdNum, tipoResolucao,
       auditoria: auditado,
+      fotos: FOTOS.slice(),   // data URLs comprimidas; o Codigo.gs salva no Drive e grava o link
     };
 
-    const btn = document.getElementById('btnCriarCaso');
-    const msg = document.getElementById('saveMsgNovo');
-    btn.disabled = true; msg.textContent = USING_DEMO ? 'Salvando (demo)…' : 'Gravando na planilha…';
+    btnCriar.disabled = true; msg.textContent = USING_DEMO ? 'Salvando (demo)…' : 'Gravando na planilha…';
 
     const tempId = -Date.now();
     try{
       if(!USING_DEMO){
-        // Mesmo padrão do salvamento de auditoria: no-cors não deixa ler a resposta,
-        // então confiamos e confirmamos com uma atualização em segundo plano depois.
+        // no-cors não deixa ler a resposta; gravamos e DEPOIS confirmamos relendo a planilha.
         await fetch(CONFIG.API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
           body: JSON.stringify({ action:'criar', fields, usuario:getUsuario() }) });
       }
       RECORDS.push({ id:tempId, idVenda, nomeCard, date:new Date(), quemCadastrou, descricao, linkPedido:fields.linkPedido,
-        auditado, setor:setor||null, culpaDe:fields.culpaDe||null, responsavel:fields.responsavel||null, empresa:fields.empresa||null,
-        tipoProduto:fields.tipoProduto||null, subproblema:fields.tipoProblema||null, detalhe:fields.subproblema||null,
-        qtd:fields.qtd===''?null:fields.qtd, custo:fields.custo===''?null:fields.custo,
-        tipoResolucao:tipoResolucao||null, queFim:fields.queFim||null });
+        auditado, setor:setor||null, culpaDe:null, responsavel:fields.responsavel||null, empresa:null,
+        tipoProduto:null, subproblema:fields.tipoProblema||null, detalhe:fields.subproblema||null,
+        qtd:fields.qtd===''?null:fields.qtd, custo:null,
+        tipoResolucao:tipoResolucao||null, queFim:null, foto:FOTOS.join('\n') });
       derivarListasDinamicas(); initFilterOptions();
       state.screen = 'casos';
       close(); render();
       toast(auditado ? 'Erro registrado e auditado' : 'Erro registrado como pendente', true);
-      if(!USING_DEMO) setTimeout(()=>{ refreshData(true).catch(()=>{}); }, 1800);
+      // Verificação real: relê a planilha e confirma que o caso apareceu.
+      if(!USING_DEMO) setTimeout(()=>verificarGravacao(()=>RECORDS.some(r=>String(r.idVenda)===idVenda && r.id>0), 'registro do caso #'+idVenda), 1800);
     } catch(err){
-      msg.textContent = 'Erro de rede: ' + err.message + ' — confira a conexão e tente de novo.'; btn.disabled = false;
+      msg.textContent = 'Erro de rede: ' + err.message + ' — confira a conexão e tente de novo.'; btnCriar.disabled = false;
     }
   });
+}
+
+/** Relê a planilha e confere se a escrita realmente pegou; avisa o usuário se não confirmou. */
+async function verificarGravacao(condicaoOk, oQue){
+  try{
+    await refreshData(true);
+    if(condicaoOk()) toast('Confirmado na planilha: ' + oQue, true);
+    else toast('Atenção: não confirmei o ' + oQue + ' na planilha. Verifique antes de confiar.', false);
+  }catch(e){
+    toast('Não consegui confirmar a gravação (falha ao reler a planilha).', false);
+  }
 }
 
 boot();
