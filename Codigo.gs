@@ -2,39 +2,32 @@
  * ============================================================================
  *  BACKEND — Painel de Erros SeuBoné (Google Apps Script / Web App)
  * ----------------------------------------------------------------------------
- *  Este script liga a planilha "Cadastro de erros" ao painel (index.html).
+ *  Liga a planilha "Cadastro de erros" ao painel (index.html).
+ *    - doGet()                → lê a planilha e devolve os registros em JSON
+ *    - doGet ?action=usuarios → devolve os usuários (para o login no painel)
+ *    - doGet ?action=historico&rowIndex=N → eventos de um caso
+ *    - doPost action:criar     → registra um novo erro (append de linha)
+ *    - doPost action:audit     → atualiza os campos de auditoria de uma linha
+ *    - doPost action:setStatus → muda o status de um caso
  *
- *  Ele faz 3 coisas:
- *    - doGet()               → lê a planilha e devolve os registros em JSON
- *    - doPost() action:criar → registra um novo erro (append de linha)
- *    - doPost() action:audit → atualiza os campos de auditoria de uma linha
- *
- *  IMPORTANTE — O mapeamento de colunas é feito por NOME DO CABEÇALHO
- *  (tolerante a acento/maiúscula), não por posição fixa. Assim, se alguém
- *  reordenar colunas na planilha, o painel continua funcionando.
- *
- *  Se o seu script atual já funciona para LEITURA, você pode:
- *    (a) me mandar o código atual para eu mesclar só a parte de escrita, ou
- *    (b) publicar este aqui como uma implantação NOVA e comparar a saída do
- *        /exec com a antiga ANTES de trocar a URL no painel (ver README).
+ *  Mapeamento de colunas por NOME DO CABEÇALHO (tolerante a acento/maiúscula).
  * ============================================================================
  */
 
-/**
- * Aba onde ficam os registros. O gid é o identificador fixo da aba (vem da URL:
- * .../edit?gid=396842648) e NÃO muda mesmo que renomeiem a aba ou reordenem.
- * É a forma mais segura de mirar a aba certa. O nome fica só como reserva.
- */
 var SHEET_GID = 396842648;
 var SHEET_NAME = 'Respostas do Form';
 
 /**
- * Mapa lógico: chave que o painel usa  →  lista de "pistas" de cabeçalho.
- * A primeira pista que casar com um cabeçalho da planilha define a coluna.
- * A ordem importa (a primeira que casar vence).
+ * Pasta do Google Drive onde as fotos enviadas pelo painel serão salvas.
+ * Crie uma pasta, copie o ID da URL (.../folders/ESTE_ID) e cole abaixo.
+ * Em branco = o script cria/reusa "Fotos - Painel de Erros" na raiz do Drive.
+ * As fotos são compartilhadas como "qualquer pessoa com o link pode ver".
  */
+var FOTOS_FOLDER_ID = '';
+var FOTOS_FOLDER_NAME = 'Fotos - Painel de Erros';
+
 var COLUNAS = {
-  data:          ['carimbo de data/hora'],  // a data real fica na 1ª coluna; o fallback abaixo garante o índice 0
+  data:          ['carimbo de data/hora'],
   auditoria:     ['auditoria'],
   idVenda:       ['id da venda'],
   nomeCard:      ['nome do card'],
@@ -50,12 +43,9 @@ var COLUNAS = {
   custo:         ['custo do erro', 'custo'],
   tipoProduto:   ['tipo de produto'],
   queFim:        ['que fim'],
-  // QUIRK confirmado por engenharia reversa: o "tipo de resolução" que o painel
-  // usa vem da coluna "Solução". A coluna "Tipo de resolução" tende a ficar vazia.
   tipoResolucao: ['solucao', 'tipo de resolucao'],
-  // Coluna NOVA (adicione um cabeçalho "Status" na planilha para ativar o workflow de status).
-  // Sem essa coluna, o painel deriva o status de "Auditoria realizada?" automaticamente.
   status:        ['status'],
+  foto:          ['foto', 'fotos', 'imagem', 'imagens', 'anexo'],
 };
 
 /* ============================ HELPERS ============================ */
@@ -63,7 +53,7 @@ var COLUNAS = {
 function norm_(s) {
   return String(s == null ? '' : s)
     .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '') // remove acentos
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -71,31 +61,25 @@ function norm_(s) {
 function getSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheets = ss.getSheets();
-  // 1º: pela gid (identificador fixo da aba) — o mais confiável
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].getSheetId() === SHEET_GID) return sheets[i];
   }
-  // 2º: pelo nome; 3º: primeira aba (último recurso)
   var byName = ss.getSheetByName(SHEET_NAME);
   return byName || sheets[0];
 }
 
-/** Constrói { chaveLogica: indiceDaColuna(0-based) } a partir da linha 1. */
 function buildColMap_(header) {
   var normHeaders = header.map(norm_);
   var map = {};
   Object.keys(COLUNAS).forEach(function (key) {
     var pistas = COLUNAS[key];
     var found = null;
-    // 1ª passada: match EXATO — evita colisões de substring
-    // (ex.: "Solução" vs "Descrição e solução do erro").
     for (var p = 0; p < pistas.length && found === null; p++) {
       var pe = norm_(pistas[p]);
       for (var c = 0; c < normHeaders.length; c++) {
         if (normHeaders[c] === pe) { found = c; break; }
       }
     }
-    // 2ª passada: match por inclusão (para cabeçalhos com sufixos/pontuação).
     for (var p2 = 0; p2 < pistas.length && found === null; p2++) {
       var pi = norm_(pistas[p2]);
       for (var c2 = 0; c2 < normHeaders.length; c2++) {
@@ -104,18 +88,15 @@ function buildColMap_(header) {
     }
     if (found !== null) map[key] = found;
   });
-  // Fallback: a data real está na 1ª coluna do layout atual.
   if (map.data == null) map.data = 0;
   return map;
 }
 
-/** "R$ 1.245,60" | "1.245,60" | "-" | 80  →  Number (ou '' se vazio/inválido). */
 function parseNumber_(v) {
   if (v === '' || v == null) return '';
   if (typeof v === 'number') return v;
   var s = String(v).replace(/r\$/i, '').replace(/\s/g, '').trim();
   if (s === '' || s === '-') return '';
-  // remove separador de milhar "." e troca vírgula decimal por "."
   s = s.replace(/\./g, '').replace(',', '.');
   var n = parseFloat(s);
   return isNaN(n) ? '' : n;
@@ -127,7 +108,6 @@ function parseBool_(v) {
   return s === 'true' || s === 'sim' || s === 'x' || s === 'verdadeiro' || s === '1';
 }
 
-/** Data (Date ou "dd/mm/aaaa") → "dd/mm/aaaa". */
 function fmtDate_(v) {
   if (v instanceof Date) {
     var d = ('0' + v.getDate()).slice(-2);
@@ -137,10 +117,41 @@ function fmtDate_(v) {
   return String(v == null ? '' : v).trim();
 }
 
-/** Extrai a 1ª URL de um texto (o painel usa isso como "link do pedido"). */
 function extractUrl_(texto) {
   var m = String(texto || '').match(/https?:\/\/[^\s)]+/i);
   return m ? m[0] : '';
+}
+
+/* ============================ FOTOS (Google Drive) ============================ */
+
+function getFotosFolder_() {
+  if (FOTOS_FOLDER_ID) {
+    try { return DriveApp.getFolderById(FOTOS_FOLDER_ID); } catch (e) {}
+  }
+  var it = DriveApp.getFoldersByName(FOTOS_FOLDER_NAME);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(FOTOS_FOLDER_NAME);
+}
+
+function salvarFotos_(fotos, idVenda) {
+  if (!fotos || !fotos.length) return '';
+  var folder = getFotosFolder_();
+  var urls = [];
+  for (var i = 0; i < fotos.length; i++) {
+    try {
+      var dataUrl = String(fotos[i] || '');
+      var m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+      if (!m) continue;
+      var mime = m[1];
+      var bytes = Utilities.base64Decode(m[2]);
+      var ext = (mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+      var nome = 'erro_' + (idVenda || 's-id') + '_' + (i + 1) + '_' + new Date().getTime() + '.' + ext;
+      var blob = Utilities.newBlob(bytes, mime, nome);
+      var file = folder.createFile(blob);
+      try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+      urls.push(file.getUrl());
+    } catch (e) {}
+  }
+  return urls.join(',');
 }
 
 function jsonOut_(obj) {
@@ -153,7 +164,6 @@ function jsonOut_(obj) {
 
 var HIST_SHEET_NAME = 'Historico';
 
-/** Aba de histórico (cria com cabeçalho se não existir). */
 function getHistSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(HIST_SHEET_NAME);
@@ -164,14 +174,12 @@ function getHistSheet_() {
   return sh;
 }
 
-/** Registra um evento no histórico. Nunca deixa um erro aqui quebrar a operação principal. */
 function logHist_(caseRow, idVenda, usuario, acao, detalhe) {
   try {
     getHistSheet_().appendRow([new Date(), caseRow, idVenda || '', usuario || '—', acao || '', detalhe || '']);
-  } catch (e) { /* silencioso */ }
+  } catch (e) {}
 }
 
-/** Retorna os eventos de histórico de um caso (mais recentes primeiro). */
 function histFor_(rowIndex) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(HIST_SHEET_NAME);
@@ -191,11 +199,111 @@ function histFor_(rowIndex) {
   return out.reverse();
 }
 
+/* ============================ USUÁRIOS / LOGIN ============================ */
+/**
+ * Aba "Usuarios" com as colunas (cabeçalho na linha 1):
+ *   Nome | Login | SenhaHash | Papel | Ativo
+ * Papel ∈ gestor | auditor | colaborador | dev. Ativo = TRUE/FALSE (vazio = ativo).
+ *
+ * O login é CONTROLE DE ACESSO NA INTERFACE (não é segurança absoluta: página
+ * pública + API aberta). Senha guardada como hash SHA-256 de (SENHA_SALT + senha).
+ * Gere o hash com gerarHashSenha() ou crie usuários com criarUsuario().
+ */
+var USUARIOS_SHEET_NAME = 'Usuarios';
+var SENHA_SALT = 'seubone2026';   // TROQUE por um valor próprio antes de publicar
+
+function sha256Hex_(txt) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, SENHA_SALT + String(txt), Utilities.Charset.UTF_8);
+  return bytes.map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
+}
+
+function getUsuariosSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(USUARIOS_SHEET_NAME);
+}
+
+function getUsuarios_() {
+  var sh = getUsuariosSheet_();
+  if (!sh) return [];
+  var values = sh.getDataRange().getValues();
+  if (values.length < 2) return [];
+  var col = {}; values[0].forEach(function (h, i) { col[norm_(h)] = i; });
+  var iNome = col['nome'], iLogin = (col['login'] != null ? col['login'] : col['usuario']);
+  var iHash = (col['senhahash'] != null ? col['senhahash'] : col['senha']);
+  var iPapel = col['papel'], iAtivo = col['ativo'];
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    var login = String(iLogin != null ? values[r][iLogin] : '').trim();
+    if (!login) continue;
+    var ativo = iAtivo == null ? true : parseBool_(values[r][iAtivo]) || String(values[r][iAtivo]).trim() === '';
+    out.push({
+      nome:  String(iNome != null ? values[r][iNome] : login).trim(),
+      login: login.toLowerCase(),
+      papel: norm_(iPapel != null ? values[r][iPapel] : 'colaborador'),
+      hash:  String(iHash != null ? values[r][iHash] : '').trim().toLowerCase(),
+      ativo: ativo,
+    });
+  }
+  return out;
+}
+
+/** EDITOR: gera o hash de uma senha pra você colar na coluna SenhaHash. */
+function gerarHashSenha() {
+  var senha = 'troque-esta-senha';   // edite aqui, rode e veja o hash nos Registros de execução
+  Logger.log('Senha: ' + senha);
+  Logger.log('SenhaHash: ' + sha256Hex_(senha));
+}
+
+/** EDITOR: cria a aba Usuarios (se preciso) e adiciona um usuário já com o hash. */
+function criarUsuario(nome, login, senha, papel) {
+  nome = nome || 'Gestor'; login = (login || 'admin'); senha = senha || 'admin'; papel = papel || 'gestor';
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = getUsuariosSheet_();
+  if (!sh) { sh = ss.insertSheet(USUARIOS_SHEET_NAME); sh.appendRow(['Nome', 'Login', 'SenhaHash', 'Papel', 'Ativo']); }
+  sh.appendRow([nome, String(login).toLowerCase(), sha256Hex_(senha), papel, 'TRUE']);
+  Logger.log('Usuário criado: ' + login + ' (' + papel + ')');
+}
+
+/** EDITOR: cria a aba Usuarios com um gestor padrão (admin / admin). TROQUE a senha depois. */
+function seedUsuarios() {
+  if (getUsuariosSheet_()) { Logger.log('Aba Usuarios já existe.'); return; }
+  criarUsuario('Administrador', 'admin', 'admin', 'gestor');
+  Logger.log('Aba Usuarios criada com admin/admin — troque a senha e cadastre o time.');
+}
+
+function cadastrarUsuarios() {
+  var LISTA = [
+    { nome: 'Jhonys Santos',    login: 'jhonys',   senha: '', papel: 'gestor' },
+    { nome: 'Francis Medeiros', login: 'francis',  senha: '', papel: 'colaborador' },
+    { nome: 'Iasmin Cristina',  login: 'iasmin',   senha: '', papel: 'colaborador' },
+    { nome: 'Nathalia',         login: 'nathalia', senha: '', papel: 'colaborador' },
+  ];
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = getUsuariosSheet_();
+  if (!sh) { sh = ss.insertSheet(USUARIOS_SHEET_NAME); sh.appendRow(['Nome', 'Login', 'SenhaHash', 'Papel', 'Ativo']); }
+  var values = sh.getDataRange().getValues();
+  var col = {}; values[0].forEach(function (h, i) { col[norm_(h)] = i; });
+  var iLogin = (col['login'] != null ? col['login'] : col['usuario']);
+  var existentes = {};
+  for (var r = 1; r < values.length; r++) { var lg = norm_(values[r][iLogin]); if (lg) existentes[lg] = r + 1; }
+  var criados = 0, atualizados = 0;
+  LISTA.forEach(function (u) {
+    if (!u.login) return;
+    var linha = [u.nome || u.login, String(u.login).toLowerCase(), sha256Hex_(u.senha || ''), u.papel || 'colaborador', 'TRUE'];
+    var lg = norm_(u.login);
+    if (existentes[lg]) { sh.getRange(existentes[lg], 1, 1, 5).setValues([linha]); atualizados++; }
+    else { sh.appendRow(linha); existentes[lg] = sh.getLastRow(); criados++; }
+  });
+  Logger.log('Usuários — criados: ' + criados + ' · atualizados: ' + atualizados);
+}
+
 /* ============================ LEITURA (GET) ============================ */
 
 function doGet(e) {
   try {
-    // GET de histórico: ?action=historico&rowIndex=123
+    if (e && e.parameter && e.parameter.action === 'usuarios') {
+      return jsonOut_({ ok: true, usuarios: getUsuarios_() });
+    }
     if (e && e.parameter && e.parameter.action === 'historico') {
       return jsonOut_({ ok: true, eventos: histFor_(e.parameter.rowIndex) });
     }
@@ -215,12 +323,11 @@ function doGet(e) {
       var row = values[r];
       var idVenda = get(row, 'idVenda');
       var nomeCard = get(row, 'nomeCard');
-      // pula linhas totalmente vazias
       if (String(idVenda).trim() === '' && String(nomeCard).trim() === '') continue;
 
       var descricao = String(get(row, 'descricao') || '');
       rows.push({
-        rowIndex:      r + 1, // linha real na planilha (1-based, +1 do cabeçalho)
+        rowIndex:      r + 1,
         data:          fmtDate_(get(row, 'data')),
         auditoria:     parseBool_(get(row, 'auditoria')),
         idVenda:       String(idVenda || '').trim(),
@@ -239,10 +346,11 @@ function doGet(e) {
         queFim:        String(get(row, 'queFim') || '').trim(),
         tipoResolucao: String(get(row, 'tipoResolucao') || '').trim(),
         status:        String(get(row, 'status') || '').trim(),
+        foto:          String(get(row, 'foto') || '').trim(),
         linkPedido:    extractUrl_(descricao),
       });
     }
-    return jsonOut_({ ok: true, version: 'hist-2026-07', aba: sh.getName(), rows: rows });
+    return jsonOut_({ ok: true, version: 'login-2026-07', aba: sh.getName(), rows: rows });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err && err.message || err) });
   }
@@ -265,7 +373,6 @@ function doPost(e) {
   }
 }
 
-/** Grava valor em uma coluna mapeada (ignora se a coluna não existir/veio vazia). */
 function setCell_(sh, rowIndex1, col, key, value) {
   var i = col[key];
   if (i == null) return;
@@ -273,7 +380,6 @@ function setCell_(sh, rowIndex1, col, key, value) {
   sh.getRange(rowIndex1, i + 1).setValue(value);
 }
 
-/** action:criar — adiciona uma nova linha de erro no fim da planilha. */
 function criarCaso_(f, usuario) {
   var sh = getSheet_();
   var header = sh.getDataRange().getValues()[0];
@@ -281,7 +387,6 @@ function criarCaso_(f, usuario) {
 
   var novaLinha = sh.getLastRow() + 1;
 
-  // data de hoje na coluna de data
   var hoje = new Date();
   setCell_(sh, novaLinha, col, 'data', fmtDate_(hoje));
 
@@ -303,13 +408,17 @@ function criarCaso_(f, usuario) {
   setCell_(sh, novaLinha, col, 'queFim',        f.queFim);
   setCell_(sh, novaLinha, col, 'tipoResolucao', f.tipoResolucao);
 
+  if (f.fotos && f.fotos.length && col.foto != null) {
+    var links = salvarFotos_(f.fotos, f.idVenda);
+    if (links) setCell_(sh, novaLinha, col, 'foto', links);
+  }
+
   logHist_(novaLinha, f.idVenda, usuario || f.quemCadastrou, 'Caso registrado',
     f.auditoria ? 'já auditado (' + (f.status || 'resolvido') + ')' : 'pendente de auditoria');
 
   return jsonOut_({ ok: true, rowIndex: novaLinha });
 }
 
-/** Se veio link separado, garante que ele apareça na descrição (o GET lê o link de lá). */
 function montarDescricao_(f) {
   var desc = String(f.descricao || '').trim();
   var link = String(f.linkPedido || '').trim();
@@ -317,7 +426,6 @@ function montarDescricao_(f) {
   return desc;
 }
 
-/** action:audit — atualiza os campos de auditoria de uma linha existente. */
 function auditarCaso_(rowIndex, f, usuario) {
   if (!rowIndex) return jsonOut_({ ok: false, error: 'rowIndex ausente' });
   var sh = getSheet_();
@@ -344,7 +452,6 @@ function auditarCaso_(rowIndex, f, usuario) {
   return jsonOut_({ ok: true, rowIndex: rowIndex });
 }
 
-/** action:setStatus — muda o status de workflow de uma linha (e sincroniza a auditoria). */
 function setStatus_(rowIndex, status, usuario) {
   if (!rowIndex || !status) return jsonOut_({ ok: false, error: 'rowIndex/status ausente' });
   var sh = getSheet_();
@@ -352,16 +459,14 @@ function setStatus_(rowIndex, status, usuario) {
   if (col.status == null) return jsonOut_({ ok: false, error: 'Coluna "Status" não existe na planilha. Adicione um cabeçalho "Status".' });
   var idVenda = (col.idVenda != null) ? sh.getRange(rowIndex, col.idVenda + 1).getValue() : '';
   setCell_(sh, rowIndex, col, 'status', status);
-  // "Resolvido" conta como auditado; os demais estados, não.
   setCell_(sh, rowIndex, col, 'auditoria', status === 'resolvido' ? 'TRUE' : 'FALSE');
   logHist_(rowIndex, idVenda, usuario, 'Status alterado', '→ ' + status);
   return jsonOut_({ ok: true, rowIndex: rowIndex, status: status });
 }
 
 /**
- * MIGRAÇÃO (rode UMA vez no editor após criar a coluna "Status"): preenche o status
- * das linhas antigas a partir de "Auditoria realizada?" — auditado→resolvido, senão→novo.
- * Não sobrescreve linhas que já tenham status.
+ * MIGRAÇÃO (rode UMA vez após criar a coluna "Status"): preenche o status das
+ * linhas antigas a partir de "Auditoria" — auditado→resolvido, senão→novo.
  */
 function migrarStatus() {
   var sh = getSheet_();
@@ -372,7 +477,7 @@ function migrarStatus() {
   for (var r = 1; r < values.length; r++) {
     var atual = String(values[r][col.status] || '').trim();
     var idv = String(values[r][col.idVenda] || '').trim();
-    if (atual !== '' || idv === '') continue; // já tem status ou linha vazia
+    if (atual !== '' || idv === '') continue;
     var status = parseBool_(values[r][col.auditoria]) ? 'resolvido' : 'novo';
     sh.getRange(r + 1, col.status + 1).setValue(status);
     n++;
@@ -380,12 +485,72 @@ function migrarStatus() {
   Logger.log('Migração concluída: ' + n + ' linha(s) preenchida(s).');
 }
 
+/* ============================ NORMALIZAÇÃO DE DADOS ============================ */
+
+var SINONIMOS = {
+  responsavel: {
+    'Fábrica Caicó': ['fabrica caico', 'fabrica caicó', 'fábrica caico', 'fabrica-caico', 'caico', 'caicó'],
+    'Fábrica': ['fabrica', 'fábrica', 'producao', 'produção', 'producao (fabrica)', 'produção (fábrica)'],
+  },
+  empresa: {
+    'ACM': ['acm'],
+    'ITC': ['itc'],
+    'TUBA': ['tuba'],
+    'SUPERNOVA': ['supernova', 'super nova'],
+    'BIGBANG': ['bigbang', 'big bang'],
+  },
+  setor: {
+    'Vendas': ['vendas', 'venda', 'comercial'],
+    'Fábrica': ['fabrica', 'fábrica'],
+    'Dupla (Vendedor e Designer)': ['dupla', 'dupla (vendedor e designer)', 'vendedor e designer'],
+    'Escritório': ['escritorio', 'escritório'],
+    'Cliente': ['cliente'],
+  },
+};
+
+function canonizar_(coluna, valor) {
+  var v = String(valor == null ? '' : valor).trim();
+  if (v === '') return '';
+  var regras = SINONIMOS[coluna];
+  if (!regras) return v;
+  var alvo = norm_(v);
+  var chaves = Object.keys(regras);
+  for (var k = 0; k < chaves.length; k++) {
+    if (norm_(chaves[k]) === alvo) return chaves[k];
+    var variantes = regras[chaves[k]];
+    for (var i = 0; i < variantes.length; i++) {
+      if (norm_(variantes[i]) === alvo) return chaves[k];
+    }
+  }
+  return v;
+}
+
+/** NORMALIZAÇÃO (rode no editor: ▶ Executar → normalizarDados). */
+function normalizarDados() {
+  var sh = getSheet_();
+  var values = sh.getDataRange().getValues();
+  var col = buildColMap_(values[0]);
+  var colunasAlvo = ['responsavel', 'empresa', 'setor'];
+  var alterados = 0, detalhes = [];
+  for (var r = 1; r < values.length; r++) {
+    for (var c = 0; c < colunasAlvo.length; c++) {
+      var chave = colunasAlvo[c];
+      if (col[chave] == null) continue;
+      var atual = values[r][col[chave]];
+      var novo = canonizar_(chave, atual);
+      if (novo !== String(atual == null ? '' : atual).trim() && novo !== '') {
+        sh.getRange(r + 1, col[chave] + 1).setValue(novo);
+        alterados++;
+        if (detalhes.length < 40) detalhes.push('linha ' + (r + 1) + ' · ' + chave + ': "' + atual + '" → "' + novo + '"');
+      }
+    }
+  }
+  Logger.log('Normalização concluída: ' + alterados + ' célula(s) padronizada(s).');
+  detalhes.forEach(function (d) { Logger.log('  ' + d); });
+}
+
 /* ============================ DIAGNÓSTICO ============================ */
-/**
- * Rode esta função uma vez no editor (menu ▶ Executar → verColunas) e veja em
- * "Registros de execução" como cada coluna da sua planilha foi mapeada.
- * Serve para conferir se o mapeamento está correto ANTES de confiar no painel.
- */
+
 function verColunas() {
   var sh = getSheet_();
   Logger.log('Aba lida: "' + sh.getName() + '" (gid ' + sh.getSheetId() + ') — ' + sh.getLastColumn() + ' colunas, ' + sh.getLastRow() + ' linhas');
