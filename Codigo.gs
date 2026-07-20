@@ -210,7 +210,7 @@ function histFor_(rowIndex) {
  * Gere o hash com gerarHashSenha() ou crie usuários com criarUsuario().
  */
 var USUARIOS_SHEET_NAME = 'Usuarios';
-var SENHA_SALT = 'seubone2026';   // TROQUE por um valor próprio antes de publicar
+var SENHA_SALT = 'seubone::v1::';   // DEVE ser idêntico ao front (hashSenha em index.html)
 
 function sha256Hex_(txt) {
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, SENHA_SALT + String(txt), Utilities.Charset.UTF_8);
@@ -272,11 +272,13 @@ function seedUsuarios() {
 }
 
 function cadastrarUsuarios() {
+  // Senha inicial = login (temporária). Para trocar depois: edite o 'senha' aqui
+  // e rode de novo (atualiza o hash da pessoa), ou use trocarSenha(login, novaSenha).
   var LISTA = [
-    { nome: 'Jhonys Santos',    login: 'jhonys',   senha: '', papel: 'gestor' },
-    { nome: 'Francis Medeiros', login: 'francis',  senha: '', papel: 'colaborador' },
-    { nome: 'Iasmin Cristina',  login: 'iasmin',   senha: '', papel: 'colaborador' },
-    { nome: 'Nathalia',         login: 'nathalia', senha: '', papel: 'colaborador' },
+    { nome: 'Jhonys Santos',    login: 'jhonys',   senha: 'jhonys',   papel: 'gestor' },
+    { nome: 'Francis Medeiros', login: 'francis',  senha: 'francis',  papel: 'colaborador' },
+    { nome: 'Iasmin Cristina',  login: 'iasmin',   senha: 'iasmin',   papel: 'colaborador' },
+    { nome: 'Nathalia',         login: 'nathalia', senha: 'nathalia', papel: 'colaborador' },
   ];
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = getUsuariosSheet_();
@@ -295,6 +297,23 @@ function cadastrarUsuarios() {
     else { sh.appendRow(linha); existentes[lg] = sh.getLastRow(); criados++; }
   });
   Logger.log('Usuários — criados: ' + criados + ' · atualizados: ' + atualizados);
+}
+
+/** EDITOR: troca a senha de um usuário já cadastrado (regrava o hash na aba Usuarios). */
+function trocarSenha(login, novaSenha) {
+  var sh = getUsuariosSheet_();
+  if (!sh) { Logger.log('Aba Usuarios não existe — rode cadastrarUsuarios() antes.'); return; }
+  var values = sh.getDataRange().getValues();
+  var col = {}; values[0].forEach(function (h, i) { col[norm_(h)] = i; });
+  var iLogin = (col['login'] != null ? col['login'] : col['usuario']);
+  var iHash = (col['senhahash'] != null ? col['senhahash'] : col['senha']);
+  for (var r = 1; r < values.length; r++) {
+    if (norm_(values[r][iLogin]) === norm_(login)) {
+      sh.getRange(r + 1, iHash + 1).setValue(sha256Hex_(novaSenha));
+      Logger.log('Senha trocada para: ' + login); return;
+    }
+  }
+  Logger.log('Login não encontrado: ' + login);
 }
 
 /* ============================ LEITURA (GET) ============================ */
