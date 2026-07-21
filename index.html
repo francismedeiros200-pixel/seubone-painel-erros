@@ -6,7 +6,7 @@
 <title>SeuBoné · Painel de Erros</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script>
 /* Chart.js embutido localmente — não depende de internet/CDN */
 /*!
@@ -533,6 +533,52 @@
   #printRoot .pr-cdesc{font-size:11.5px;color:#565C64;line-height:1.45;margin-top:7px;border-left:2px solid #EADFA8;padding-left:9px}
   #printRoot .pr-foot{margin-top:24px;padding-top:14px;border-top:2px solid #17181B;font-size:12px;color:#6A7079;text-align:center;line-height:1.5}
   #printRoot .pr-foot b{color:#16181D}
+
+  /* ================================================================
+     TOKENS + REFINO VISUAL (Lote 1 · direção aprovada no preview)
+     Escala de superfícies/texto em tokens; âmbar #FFC400 mantido como
+     marca. Camada no fim do <style>: vence por ordem de origem.
+     ================================================================ */
+  :root{
+    --surface-0:#0b0d10; --surface-1:#12151a; --surface-2:#171b21; --surface-3:#1e232b;
+    --border-1:#242a33; --border-2:#2f3742;
+    --text-1:#e7ecf3; --text-2:#9aa4b2; --text-3:#6b7482;
+    --accent:#FFC400; --r-lg:14px;
+    --shadow-1:0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px rgba(0,0,0,.35);
+  }
+  /* IDs / números em fonte monoespaçada */
+  .idchip,.mono,.kc-id,.pid,.num{ font-family:"JetBrains Mono", ui-monospace, monospace }
+  .card,.metric,.kpi-accent,.kpi-red,.stat,.ck{ border-radius:14px }
+
+  /* Refino do tema escuro (padrão): superfícies em camadas + sombra */
+  html[data-theme="dark"] body{ background:var(--surface-0); color:var(--text-1) }
+  html[data-theme="dark"] .sidebar{ background:var(--surface-1); border-right:1px solid var(--border-1) }
+  html[data-theme="dark"] header{ background:var(--surface-1); border-bottom-color:var(--border-1) }
+  html[data-theme="dark"] main .card,
+  html[data-theme="dark"] .stat,html[data-theme="dark"] .metric,html[data-theme="dark"] .ck,
+  html[data-theme="dark"] .kpi-accent,html[data-theme="dark"] .kpi-red{
+    background:var(--surface-1); border:1px solid var(--border-1); border-radius:var(--r-lg); box-shadow:var(--shadow-1);
+  }
+  html[data-theme="dark"] .kpi-dark,html[data-theme="dark"] .metric.hero{ background:var(--surface-3); border:1px solid var(--border-2); box-shadow:var(--shadow-1) }
+  html[data-theme="dark"] .kpi-accent{ border-left:3px solid var(--accent) }
+  html[data-theme="dark"] .filters select,html[data-theme="dark"] .filters input,
+  html[data-theme="dark"] .iconbtn,html[data-theme="dark"] .searchbar,html[data-theme="dark"] .btn-ghost,
+  html[data-theme="dark"] .chip,html[data-theme="dark"] .field input,html[data-theme="dark"] .field select,
+  html[data-theme="dark"] .field textarea,html[data-theme="dark"] .seg,html[data-theme="dark"] .seg-toggle,
+  html[data-theme="dark"] .stbtn,html[data-theme="dark"] .navbtn,html[data-theme="dark"] .kcard,
+  html[data-theme="dark"] .kcol{ background:var(--surface-2); border-color:var(--border-1); color:var(--text-1) }
+  html[data-theme="dark"] .idchip{ background:var(--surface-2); border-color:var(--border-1); color:var(--text-2) }
+  html[data-theme="dark"] thead th{ background:var(--surface-2); border-bottom-color:var(--border-1); color:var(--text-3) }
+  html[data-theme="dark"] tbody td{ border-bottom-color:var(--border-1) }
+  html[data-theme="dark"] tbody tr.clickable:hover{ background:var(--surface-2) }
+  /* pills de status (rgba — seguro em qualquer navegador) */
+  html[data-theme="dark"] .pill-green,html[data-theme="dark"] .src-live{ background:rgba(34,197,94,.16); color:#4ade80 }
+  html[data-theme="dark"] .pill-red,html[data-theme="dark"] .age-old{ background:rgba(239,68,68,.16); color:#f87171 }
+  html[data-theme="dark"] .pill-amber,html[data-theme="dark"] .src-demo,html[data-theme="dark"] .age-mid{ background:rgba(245,158,11,.18); color:#fbbf24 }
+  html[data-theme="dark"] .pill-grey,html[data-theme="dark"] .age-ok{ background:var(--surface-3); color:var(--text-2) }
+  /* "última atualização" no header */
+  #lastSync{ font-size:12px; color:var(--text-3); white-space:nowrap }
+  #lastSync b{ color:var(--text-2); font-weight:600 }
 </style>
 </head>
 <body>
@@ -582,7 +628,7 @@
     <header>
       <div class="htitle">
         <h1 id="pageTitle">Visão Executiva</h1>
-        <div class="sub"><span id="pageSub"></span><span class="src-badge" id="srcBadge"></span></div>
+        <div class="sub"><span id="pageSub"></span><span class="src-badge" id="srcBadge"></span><span id="lastSync"></span></div>
       </div>
       <div class="filters">
         <button class="btn btn-accent" id="btnNovoCasoTop" title="Registrar novo erro">+ Novo caso</button>
@@ -736,6 +782,7 @@ function mostrarApp(){
   updateSideUser();
   if(!podeVerTela(state.screen)) state.screen = telaInicialPapel();
   render();
+  updateLastSync();
   syncFromHash();
 }
 
@@ -971,6 +1018,7 @@ async function boot(){
     RECORDS = gerarDadosDemo();
     USING_DEMO = true;
   }
+  LAST_SYNC = Date.now();
   derivarListasDinamicas();
   await loadUsuarios();
   restoreState(); // recupera a última visão (tela, setor, empresa, filtro rápido, ordenação)
@@ -993,12 +1041,14 @@ async function refreshData(silent){
   if(!silent){ btn.textContent = '…'; btn.disabled = true; showSkeleton(); }
   try{
     if(CONFIG.API_URL){ RECORDS = await loadRealData(); USING_DEMO = false; }
+    LAST_SYNC = Date.now();
     derivarListasDinamicas();
     initFilterOptions();
     const fs=document.getElementById('fSetor'), fe=document.getElementById('fEmpresa');
     if(fs && state.setor) fs.value=state.setor;
     if(fe && state.empresa) fe.value=state.empresa;
     render();
+    updateLastSync();
     if(!silent) toast('Dados atualizados', true);
   } catch(err){ if(!silent){ render(); toast('Não consegui atualizar: ' + err.message, false); } else console.error('Atualização em segundo plano falhou:', err); }
   finally { if(!silent){ btn.textContent = '⟳'; btn.disabled = false; } }
@@ -1007,6 +1057,24 @@ async function refreshData(silent){
 /* ================= ESTADO / FILTROS ================= */
 const state = { screen:'exec', periodoTipo:'relativo', periodo:'Últimos 12 meses', mes:'', semana:'', setor:'', empresa:'', granularidade:'Mensal', buscaCaso:'', semanaReuniao:null };
 let charts = {};
+
+/* ---------- "Última atualização" (carimbo do último carregamento da planilha) ---------- */
+let LAST_SYNC = null;
+function fmtAgo(ts){
+  if(!ts) return '';
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s < 45) return 'agora mesmo';
+  const m = Math.round(s/60);
+  if(m < 60) return 'há ' + m + ' min';
+  const h = Math.floor(m/60);
+  return 'há ' + h + 'h' + (m%60 ? ' ' + (m%60) + 'min' : '');
+}
+function updateLastSync(){
+  const el = document.getElementById('lastSync');
+  if(!el) return;
+  el.innerHTML = LAST_SYNC ? ('· atualizado <b>' + fmtAgo(LAST_SYNC) + '</b>') : '';
+}
+setInterval(updateLastSync, 30000);
 let CASO_ATUAL = null; // id do caso aberto no drawer lateral (null = fechado)
 state.casosSort = { key:'', dir:'desc' }; // ordenação da tabela de casos ('' = padrão: pendentes primeiro)
 state.casosView = 'todos'; // filtro rápido da tela de casos: todos | pendentes | parados7 | altoCusto
@@ -1109,7 +1177,9 @@ function exportarSelecionados(){
     ['Setor',r=>r.setor],['Culpa de',r=>r.culpaDe],['Responsável',r=>r.responsavel],['Empresa',r=>r.empresa],
     ['Tipo de problema',r=>r.subproblema],['Detalhe',r=>r.detalhe],['Qtd',r=>r.qtd],['Custo',r=>r.custo==null?'':r.custo],
     ['Tipo de resolução',r=>r.tipoResolucao],['Que fim',r=>r.queFim],['Status',r=>r.auditado?'Auditado':'Pendente'],['Descrição',r=>r.descricao]];
-  const esc=(v)=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  // Escapa p/ CSV E neutraliza injeção de fórmula: célula começando com = + - @ (ou tab/CR)
+  // recebe um apóstrofo na frente, senão Excel/Sheets executa como fórmula ao abrir.
+  const esc=(v)=>{ let s=String(v==null?'':v); if(/^[=+\-@\t\r]/.test(s)) s="'"+s; return '"'+s.replace(/"/g,'""')+'"'; };
   const csv='﻿'+cols.map(c=>esc(c[0])).join(';')+'\r\n'+
     rows.map(r=>cols.map(c=>esc(c[1](r))).join(';')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
@@ -2148,7 +2218,7 @@ function drawerInnerHTML(r){
       <div class="sec-title">Auditoria ${editable ? '<span class="badge pill-amber">preencher agora</span>' : (r.auditado ? '<span class="badge pill-grey">já registrada</span>' : '<span class="badge pill-grey">somente leitura</span>')}</div>
       <form id="formAuditoria">
         <div class="field-grid" style="margin-bottom:14px">
-          <div class="field"><label>Setor do problema</label>${editable ? `<select name="setor">${fieldOrSel(SETOR_OPCOES, r.setor)}</select>` : `<div class="readonly-block">${esc(r.setor)||'—'}</div>`}</div>
+          <div class="field"><label>Setor do problema *</label>${editable ? `<select name="setor"><option value="" ${!r.setor?'selected':''}>— selecione —</option>${fieldOrSel(SETOR_OPCOES, r.setor)}</select>` : `<div class="readonly-block">${esc(r.setor)||'—'}</div>`}</div>
           <div class="field"><label>Responsável</label>${editable ? `<input name="responsavel" value="${esc(r.responsavel)}" placeholder="Nome do consultor ou 'Produção (Fábrica)'">` : `<div class="readonly-block">${esc(r.responsavel)||'—'}</div>`}</div>
         </div>
         <div class="field-grid" style="margin-bottom:14px">
@@ -2202,8 +2272,8 @@ async function carregarHistorico(rowIndex){
     box.innerHTML = evs.map(ev=>`<div class="hist-item">
       <div class="hist-dot"></div>
       <div class="hist-content">
-        <div class="hist-line"><b>${ev.acao}</b>${ev.detalhe ? ' — ' + ev.detalhe : ''}</div>
-        <div class="hist-meta">${ev.usuario || '—'} · ${ev.quando || ''}</div>
+        <div class="hist-line"><b>${esc(ev.acao)}</b>${ev.detalhe ? ' — ' + esc(ev.detalhe) : ''}</div>
+        <div class="hist-meta">${esc(ev.usuario) || '—'} · ${esc(ev.quando) || ''}</div>
       </div>
     </div>`).join('');
   }catch(e){
@@ -2253,6 +2323,8 @@ function wireDrawer(r){
       const fd = new FormData($('formAuditoria'));
       const tipoResolucao = fd.get('tipoResolucao');
       clearFieldErrs($('formAuditoria'));
+      const setorSel = $('formAuditoria').querySelector('[name="setor"]');
+      if(!String(fd.get('setor')||'').trim()){ markFieldErr(setorSel, 'Informe o setor do problema'); if(setorSel) setorSel.focus(); return; }
       if(!tipoResolucao){ markFieldErr(selRes, 'Selecione o tipo de resolução'); selRes.focus(); return; }
       const custoNum = Number(fd.get('custo')||0), qtdNum = Number(fd.get('qtd')||0);
       const msg = $('saveMsg');

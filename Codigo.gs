@@ -478,7 +478,10 @@ function setStatus_(rowIndex, status, usuario) {
   if (col.status == null) return jsonOut_({ ok: false, error: 'Coluna "Status" não existe na planilha. Adicione um cabeçalho "Status".' });
   var idVenda = (col.idVenda != null) ? sh.getRange(rowIndex, col.idVenda + 1).getValue() : '';
   setCell_(sh, rowIndex, col, 'status', status);
-  setCell_(sh, rowIndex, col, 'auditoria', status === 'resolvido' ? 'TRUE' : 'FALSE');
+  // Status e auditoria são coisas distintas: mover o card SÓ promove p/ auditado ao
+  // resolver — NUNCA rebaixa. (Antes, arrastar um caso auditado p/ fora de "resolvido"
+  // zerava a auditoria e sumia com ele dos painéis de custo.)
+  if (status === 'resolvido') setCell_(sh, rowIndex, col, 'auditoria', 'TRUE');
   logHist_(rowIndex, idVenda, usuario, 'Status alterado', '→ ' + status);
   return jsonOut_({ ok: true, rowIndex: rowIndex, status: status });
 }
