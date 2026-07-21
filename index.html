@@ -580,6 +580,32 @@
   #lastSync{ font-size:12px; color:var(--text-3); white-space:nowrap }
   #lastSync b{ color:var(--text-2); font-weight:600 }
 
+  /* ===== Dashboard (Executiva): KPI estilo cartão + saudação + Top setores ===== */
+  .metric.dash{ position:relative; padding-top:16px }
+  .metric.dash .m-spark{ position:absolute; top:14px; right:16px; width:82px; height:26px; opacity:.85; pointer-events:none }
+  .metric.dash .m-spark svg{ width:100%; height:100%; margin:0 }
+  .kpill{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:999px; margin-top:9px; background:rgba(0,0,0,.05); color:#8A9099 }
+  .kpill.up{ color:#C0392B; background:rgba(198,58,50,.12) }
+  .kpill.down{ color:#15843F; background:rgba(21,132,63,.12) }
+  html[data-theme="dark"] .kpill{ background:rgba(255,255,255,.06); color:var(--text-3) }
+  html[data-theme="dark"] .kpill.up{ color:#f87171; background:rgba(239,68,68,.14) }
+  html[data-theme="dark"] .kpill.down{ color:#4ade80; background:rgba(34,197,94,.14) }
+  .dash-hi{ margin-bottom:20px }
+  .dash-hi h2{ font-size:23px; font-weight:800; letter-spacing:-.3px; margin:0 }
+  .dash-hi .sub{ color:#8A9099; margin-top:5px; font-size:13.5px }
+  html[data-theme="dark"] .dash-hi .sub{ color:var(--text-2) }
+  .tops .ts-row{ padding:11px 0; border-bottom:1px solid #EFF0F3 }
+  .tops .ts-row:last-child{ border-bottom:0 }
+  html[data-theme="dark"] .tops .ts-row{ border-bottom-color:var(--border-1) }
+  .tops .ts-top{ display:flex; align-items:center; gap:9px; font-size:13.5px }
+  .tops .ts-name{ font-weight:600 }
+  .tops .ts-count{ margin-left:auto; color:#8A9099; font-size:12.5px; white-space:nowrap }
+  .tops .ts-bar{ height:6px; border-radius:999px; background:#EEF0F3; margin-top:8px; overflow:hidden }
+  html[data-theme="dark"] .tops .ts-bar{ background:var(--surface-3) }
+  .tops .ts-bar i{ display:block; height:100%; border-radius:999px }
+  .ts-warn{ margin-top:14px; padding-top:13px; border-top:1px solid #EFF0F3 }
+  html[data-theme="dark"] .ts-warn{ border-top-color:var(--border-1) }
+
   /* ===== KPI: delta vs mês anterior + sparkline ===== */
   .kdelta{ font-size:11.5px; font-weight:600 }
   .kdelta.up{ color:#C0392B } .kdelta.down{ color:#15843F } .kdelta.flat{ color:#8A9099 }
@@ -1451,6 +1477,17 @@ function deltaHTML(serie){
   return d>0 ? `<span class="kdelta up">▲ ${d}% vs mês anterior</span>` : `<span class="kdelta down">▼ ${Math.abs(d)}% vs mês anterior</span>`;
 }
 
+/* delta em pílula (estilo dashboard). Para erros/custo subir é ruim (vermelho). */
+function deltaPill(serie, unidade){
+  if(!serie || serie.length < 2) return '';
+  const cur=serie[serie.length-1].v, prev=serie[serie.length-2].v;
+  if(!prev) return '';
+  const d = Math.round((cur-prev)/prev*100);
+  const cls = d>0?'up':d<0?'down':'flat';
+  const ico = d>0?'▲':d<0?'▼':'≈';
+  return `<span class="kpill ${cls}">${ico} ${Math.abs(d)}% vs mês anterior</span>`;
+}
+
 function renderExec(main, data, all){
   const total = data.length;
   const serieN = monthlyBins(data);
@@ -1494,61 +1531,65 @@ function renderExec(main, data, all){
       </div>
     </div>`;
 
+  const nome = ((SESSION && SESSION.nome) ? String(SESSION.nome) : (getUsuario()||'')).split(' ')[0] || 'time';
+  const hora = new Date().getHours();
+  const saud = hora<12 ? 'Bom dia' : hora<18 ? 'Boa tarde' : 'Boa noite';
+  const semSetorTotal = RECORDS.filter(r=>!r.setor).length;
+  const subAcao = [];
+  if(pendentes>0) subAcao.push(`<b>${pendentes}</b> caso(s) pendente(s) de auditoria`);
+  if(semSetorTotal>0) subAcao.push(`<b>${semSetorTotal}</b> sem setor preenchido`);
+  const setoresOrd = Object.entries(bySetor).sort((a,b)=>b[1]-a[1]);
+  const maxSetor = setoresOrd.length ? setoresOrd[0][1] : 1;
+
   main.innerHTML = `
-    <div class="banner">
-      <span class="b-ic">!</span>
-      <div>
-        <div class="b-title">Setor com mais ocorrências: ${esc(setorTop[0])} (${setorTop[1]} erros · ${total?Math.round(setorTop[1]/total*100):0}% do total auditado)</div>
-        <div class="b-text">${pendentes>0 ? `<b>${pendentes} caso(s)</b> ainda sem auditoria não entram nestes números — vá em "Casos / Auditoria" pra fechar.` : 'Todos os casos do período já foram auditados.'}</div>
-      </div>
+    <div class="dash-hi">
+      <h2>${saud}, ${esc(nome)} 👋</h2>
+      <div class="sub">${subAcao.length ? subAcao.join(' e ') + '.' : 'Tudo em dia por aqui — sem pendências no recorte. 🎉'}</div>
     </div>
 
-    ${compStrip}
-
     <div class="metrics">
-      <div class="metric hero">
-        <div class="m-top"><span class="m-ic">▦</span><span class="m-label">Total de erros auditados</span></div>
+      <div class="metric dash hero">
+        <div class="m-top"><span class="m-ic">▦</span><span class="m-label">Erros auditados</span></div>
         <div class="m-value">${total}</div>
-        <div class="m-foot">${pendentes} pendente(s)${deltaHTML(serieN)?' · '+deltaHTML(serieN):''}</div>
-        ${spN}
+        <div>${deltaPill(serieN) || `<span class="kpill">${pendentes} pendente(s)</span>`}</div>
+        <div class="m-spark">${spN}</div>
       </div>
-      <div class="metric">
-        <div class="m-top"><span class="m-ic ic-amber">◈</span><span class="m-label">Custo total dos erros</span></div>
+      <div class="metric dash">
+        <div class="m-top"><span class="m-ic ic-amber">◈</span><span class="m-label">Custo total</span></div>
         <div class="m-value">${brl(custoTotal)}</div>
-        <div class="m-foot">${brl(custoMedio)} médio${deltaHTML(serieC)?' · '+deltaHTML(serieC):''}</div>
-        ${spC}
+        <div>${deltaPill(serieC) || `<span class="kpill">${brl(custoMedio)} médio</span>`}</div>
+        <div class="m-spark">${spC}</div>
       </div>
-      <div class="metric danger">
-        <div class="m-top"><span class="m-ic ic-red">▲</span><span class="m-label">Saída de caixa (reembolsos)</span></div>
-        <div class="m-value">${brl(saidaCaixa)}</div>
-        <div class="m-foot">${custoTotal? Math.round(saidaCaixa/custoTotal*100):0}% do custo total é dinheiro saindo</div>
+      <div class="metric dash">
+        <div class="m-top"><span class="m-ic ic-red">▲</span><span class="m-label">Pendentes de auditoria</span></div>
+        <div class="m-value">${pendentes}</div>
+        <div><span class="kpill ${pendentes>0?'up':'down'}">${pendentes>0?'aguardando fechamento':'tudo auditado'}</span></div>
       </div>
-      <div class="metric">
-        <div class="m-top"><span class="m-ic ic-slate">▤</span><span class="m-label">Custo operacional</span></div>
-        <div class="m-value">${brl(custoOperacional)}</div>
-        <div class="m-foot">${naoClassCusto>0 ? brl(naoClassCusto)+' ainda sem resolução classificada' : 'material, refação, desconto — come margem'}</div>
+      <div class="metric dash">
+        <div class="m-top"><span class="m-ic ic-slate">◑</span><span class="m-label">Casos sem setor</span></div>
+        <div class="m-value">${semSetorTotal}</div>
+        <div>${semSetorTotal>0?`<span class="kpill up">trava as análises</span>`:`<span class="kpill down">completo</span>`}</div>
       </div>
     </div>
 
     <div class="grid grid-2">
-      <div class="metric">
-        <div class="m-top"><span class="m-ic ic-green">◆</span><span class="m-label">Solução mais recorrente</span></div>
-        <div class="m-value sm">${esc(solucaoRecorrente)}</div>
-        <div class="m-foot">${data.filter(r=>r.tipoResolucao===solucaoRecorrente).length} de ${total} casos</div>
+      <div class="card">
+        <div class="card-head">
+          <div><h3>Evolução · erros e custo</h3><div class="card-sub">Área = nº de erros auditados. Linha pontilhada = custo total (R$).</div></div>
+          <div class="seg" id="segGran"><button data-g="Semanal">Semanal</button><button data-g="Mensal">Mensal</button></div>
+        </div>
+        <div class="chart-box" style="height:280px"><canvas id="chTrend"></canvas></div>
       </div>
-      <div class="metric">
-        <div class="m-top"><span class="m-ic ic-blue">◉</span><span class="m-label">Quem mais registra erros</span></div>
-        <div class="m-value sm">${esc(cadastroTop[0])}</div>
-        <div class="m-foot">${cadastroTop[1]} caso(s) abertos — quem mais cadastra, não quem mais erra</div>
+      <div class="card tops" style="display:flex;flex-direction:column">
+        <div class="card-head"><div><h3>Top setores</h3><div class="card-sub">Onde o erro se origina (auditados no recorte).</div></div></div>
+        <div style="margin-top:4px">
+          ${setoresOrd.slice(0,5).map(([s,n])=>`<div class="ts-row">
+            <div class="ts-top"><span class="dot" style="background:${colorForSetor(s)}"></span><span class="ts-name">${esc(s)}</span><span class="ts-count">${n} · ${total?Math.round(n/total*100):0}%</span></div>
+            <div class="ts-bar"><i style="width:${maxSetor?Math.max(4,n/maxSetor*100):0}%;background:${colorForSetor(s)}"></i></div>
+          </div>`).join('')}
+        </div>
+        ${semSetorTotal>0?`<div class="ts-warn"><div style="font-size:12.5px;color:#8A6A00;margin-bottom:9px">⚠️ <b>${semSetorTotal}</b> caso(s) ainda sem setor — o ranking fica incompleto até preencher.</div><button class="btn btn-primary" id="dashBackfill" style="width:100%">Preencher setores →</button></div>`:''}
       </div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head">
-        <div><h3>Evolução · nº de erros e custo</h3><div class="card-sub">Barras = quantidade de erros auditados. Linha pontilhada = custo total (R$).</div></div>
-        <div class="seg" id="segGran"><button data-g="Semanal">Semanal</button><button data-g="Mensal">Mensal</button></div>
-      </div>
-      <div class="chart-box" style="height:300px"><canvas id="chTrend"></canvas></div>
     </div>
 
     <div class="card" style="margin-bottom:14px">
@@ -1572,6 +1613,7 @@ function renderExec(main, data, all){
     b.classList.toggle('active', b.dataset.g===state.granularidade);
     b.addEventListener('click', ()=>{ state.granularidade=b.dataset.g; render(); });
   });
+  const dashBf=document.getElementById('dashBackfill'); if(dashBf) dashBf.addEventListener('click', ()=>{ state.screen='incompletos'; render(); });
 
   let labels, seriesN, seriesCusto;
   if(state.granularidade === 'Mensal'){
@@ -1593,7 +1635,7 @@ function renderExec(main, data, all){
 
   charts.trend = safeChart('chTrend', {
     data:{ labels, datasets:[
-      { type:'bar', label:'Nº de erros', data: seriesN, backgroundColor:'#FFC400', borderRadius:5, barPercentage:.6, yAxisID:'y' },
+      { type:'line', label:'Nº de erros', data: seriesN, borderColor:'#FFC400', backgroundColor:'rgba(255,196,0,.16)', fill:true, borderWidth:2, tension:.35, pointRadius:2, pointHoverRadius:4, yAxisID:'y' },
       { type:'line', label:'Custo total (R$)', data: seriesCusto, borderColor:'#2A6FDB', backgroundColor:'#2A6FDB', borderDash:[6,5], borderWidth:2, tension:.35, pointRadius:3, yAxisID:'y1' },
     ]},
     options:{ maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
