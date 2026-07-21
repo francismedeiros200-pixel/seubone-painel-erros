@@ -579,6 +579,28 @@
   /* "última atualização" no header */
   #lastSync{ font-size:12px; color:var(--text-3); white-space:nowrap }
   #lastSync b{ color:var(--text-2); font-weight:600 }
+
+  /* ===== KPI: delta vs mês anterior + sparkline ===== */
+  .kdelta{ font-size:11.5px; font-weight:600 }
+  .kdelta.up{ color:#C0392B } .kdelta.down{ color:#15843F } .kdelta.flat{ color:#8A9099 }
+  html[data-theme="dark"] .kdelta.up{ color:#f87171 } html[data-theme="dark"] .kdelta.down{ color:#4ade80 } html[data-theme="dark"] .kdelta.flat{ color:var(--text-3) }
+  .spark{ display:block; width:100%; height:26px; margin-top:10px; opacity:.85 }
+  .metric.hero .spark{ opacity:1 }
+
+  /* ===== Histórico agrupado por dia ===== */
+  .hist-day{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#8A9099; margin:6px 0 10px; padding-top:4px }
+  .hist-day:first-child{ padding-top:0 }
+  html[data-theme="dark"] .hist-day{ color:var(--text-3) }
+
+  /* ===== Lightbox de fotos ===== */
+  .lb-scrim{ position:fixed; inset:0; z-index:600; background:rgba(6,7,9,.9); display:flex; align-items:center; justify-content:center; padding:40px }
+  .lb-img{ max-width:92vw; max-height:88vh; border-radius:10px; box-shadow:0 20px 70px rgba(0,0,0,.6); object-fit:contain }
+  .lb-x{ position:absolute; top:18px; right:20px; width:42px; height:42px; border-radius:11px; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.08); color:#fff; font-size:17px; cursor:pointer }
+  .lb-x:hover{ background:rgba(255,255,255,.18) }
+  .lb-nav{ position:absolute; top:50%; transform:translateY(-50%); width:52px; height:52px; border-radius:50%; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.08); color:#fff; font-size:26px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center }
+  .lb-nav:hover{ background:rgba(255,255,255,.2) }
+  .lb-prev{ left:22px } .lb-next{ right:22px }
+  .lb-count{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#e7ecf3; font-size:13px; font-variant-numeric:tabular-nums; background:rgba(0,0,0,.4); padding:5px 12px; border-radius:999px }
 </style>
 </head>
 <body>
@@ -614,6 +636,7 @@
       <div class="nav-item" data-screen="resp"><span class="ic">◉</span><span>Ranking por Consultor</span></div>
       <div class="nav-label">Operação</div>
       <div class="nav-item" data-screen="casos"><span class="ic">≡</span><span>Casos / Auditoria</span><span class="ic-badge" id="navBadge">0</span></div>
+      <div class="nav-item" data-screen="incompletos"><span class="ic">◑</span><span>Dados incompletos</span><span class="ic-badge" id="navBadgeInc" style="background:#E0A400">0</span></div>
       <div class="nav-label">Apresentação</div>
       <div class="nav-item" data-screen="reuniao"><span class="ic">◧</span><span>Reunião de Vendas</span></div>
     </nav>
@@ -704,10 +727,10 @@ const DEMO_USUARIOS = [
 
 // Matriz de permissões por papel.
 const PAPEIS = {
-  gestor:      { label:'Gestor',      screens:['exec','causas','resp','casos','reuniao'], registrar:true, auditar:true },
-  dev:         { label:'Dev',         screens:['exec','causas','resp','casos','reuniao'], registrar:true, auditar:true },
-  auditor:     { label:'Auditor',     screens:['exec','causas','resp','casos','reuniao'], registrar:true, auditar:true },
-  colaborador: { label:'Colaborador', screens:['causas','casos'],                         registrar:true, auditar:false },
+  gestor:      { label:'Gestor',      screens:['exec','causas','resp','casos','incompletos','reuniao'], registrar:true, auditar:true },
+  dev:         { label:'Dev',         screens:['exec','causas','resp','casos','incompletos','reuniao'], registrar:true, auditar:true },
+  auditor:     { label:'Auditor',     screens:['exec','causas','resp','casos','incompletos','reuniao'], registrar:true, auditar:true },
+  colaborador: { label:'Colaborador', screens:['causas','casos'],                                       registrar:true, auditar:false },
 };
 function papelDef(){ return PAPEIS[SESSION && SESSION.papel] || PAPEIS.colaborador; }
 function loginAtivo(){ return USUARIOS.length > 0; }           // sem usuários cadastrados → modo aberto (retrocompatível)
@@ -1078,6 +1101,7 @@ setInterval(updateLastSync, 30000);
 let CASO_ATUAL = null; // id do caso aberto no drawer lateral (null = fechado)
 state.casosSort = { key:'', dir:'desc' }; // ordenação da tabela de casos ('' = padrão: pendentes primeiro)
 state.casosView = 'todos'; // filtro rápido da tela de casos: todos | pendentes | parados7 | altoCusto
+state.causaFiltro = ''; // drill-down: quando setado (ex.: clique no Pareto), filtra Casos por essa causa
 state.casosLayout = 'lista'; // layout da tela de casos: lista | kanban
 
 /* ---------- Persistência da visão (localStorage) ---------- */
@@ -1358,6 +1382,7 @@ function render(){
   persistState();
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===state.screen));
   document.getElementById('navBadge').textContent = RECORDS.filter(r=>!r.auditado).length;
+  (()=>{ const b=document.getElementById('navBadgeInc'); if(!b) return; const n=RECORDS.filter(r=>!r.setor).length; b.textContent=n; b.style.display = n>0 ? '' : 'none'; })();
   Object.values(charts).forEach(c=>{ try{ c.destroy(); }catch(e){} });
   charts = {};
 
@@ -1371,11 +1396,12 @@ function render(){
     causas: ['Ranking de Causas', 'Pareto por custo, produto e volume · ' + rotuloPeriodo()],
     resp: ['Ranking por Consultor', 'Quem mais gera custo e como cada um resolve · ' + rotuloPeriodo()],
     casos: ['Casos / Auditoria', 'Fila de casos pendentes e já auditados · ' + rotuloPeriodo()],
+    incompletos: ['Dados incompletos', 'Casos sem setor preenchido — atribua para destravar as análises'],
     reuniao: ['Reunião de Vendas', 'Erros da semana para apresentar ao time — Vendas e Dupla · navegação de semana própria'],
   };
   document.getElementById('pageTitle').textContent = TITLES[state.screen][0];
   document.getElementById('pageSub').textContent = TITLES[state.screen][1];
-  document.querySelector('.filters').style.display = state.screen==='reuniao' ? 'none' : '';
+  document.querySelector('.filters').style.display = (state.screen==='reuniao'||state.screen==='incompletos') ? 'none' : '';
   // Faixa visível de modo demonstração — evita que dados de exemplo sejam confundidos com reais.
   document.getElementById('demoBanner').innerHTML = USING_DEMO
     ? `<div class="demo-strip">⚠️ <b>Modo demonstração</b> — os números abaixo são dados de exemplo, não a planilha real. ${CONFIG.API_URL ? 'Não consegui ler a planilha; tente <b>⟳ Atualizar</b>.' : ''}</div>`
@@ -1385,6 +1411,7 @@ function render(){
   main.innerHTML = '';
 
   if(state.screen === 'reuniao'){ renderReuniao(main); return; }
+  if(state.screen === 'incompletos'){ renderIncompletos(main); return; }
 
   const all = filtered();
   const data = auditadosOnly(all);
@@ -1399,8 +1426,37 @@ function render(){
   else renderResp(main, data);
 }
 
+/* Série mensal (últimos até 8 meses presentes) a partir das linhas do recorte. */
+function monthlyBins(rows, valueFn){
+  const map = {};
+  rows.forEach(r=>{ if(!r.date || !(r.date instanceof Date) || isNaN(r.date)) return;
+    const k = r.date.getFullYear()+'-'+String(r.date.getMonth()+1).padStart(2,'0');
+    map[k] = (map[k]||0) + (valueFn ? valueFn(r) : 1);
+  });
+  return Object.keys(map).sort().slice(-8).map(k=>({ key:k, v:map[k] }));
+}
+function sparklineSVG(vals, color){
+  if(!vals || vals.length < 2) return '';
+  const w=100, h=26, max=Math.max(...vals), min=Math.min(...vals, 0), rng=(max-min)||1;
+  const pts = vals.map((v,i)=>{ const x=(i/(vals.length-1))*w; const y=h-((v-min)/rng)*(h-4)-2; return x.toFixed(1)+','+y.toFixed(1); }).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/></svg>`;
+}
+/* delta % do último mês vs anterior. Para erros/custo, subir é RUIM (vermelho). */
+function deltaHTML(serie){
+  if(!serie || serie.length < 2) return '';
+  const cur=serie[serie.length-1].v, prev=serie[serie.length-2].v;
+  if(!prev) return '';
+  const d = Math.round((cur-prev)/prev*100);
+  if(d===0) return '<span class="kdelta flat">≈ estável vs mês anterior</span>';
+  return d>0 ? `<span class="kdelta up">▲ ${d}% vs mês anterior</span>` : `<span class="kdelta down">▼ ${Math.abs(d)}% vs mês anterior</span>`;
+}
+
 function renderExec(main, data, all){
   const total = data.length;
+  const serieN = monthlyBins(data);
+  const serieC = monthlyBins(data, r=>r.custo||0);
+  const spN = sparklineSVG(serieN.map(x=>x.v), '#FFC400');
+  const spC = sparklineSVG(serieC.map(x=>x.v), '#FFC400');
   const pendentes = all.length - data.length;
   const custoTotal = data.reduce((a,r)=>a+(r.custo||0),0);
   const custoMedio = total ? custoTotal/total : 0;
@@ -1453,12 +1509,14 @@ function renderExec(main, data, all){
       <div class="metric hero">
         <div class="m-top"><span class="m-ic">▦</span><span class="m-label">Total de erros auditados</span></div>
         <div class="m-value">${total}</div>
-        <div class="m-foot">${pendentes} pendente(s) de auditoria</div>
+        <div class="m-foot">${pendentes} pendente(s)${deltaHTML(serieN)?' · '+deltaHTML(serieN):''}</div>
+        ${spN}
       </div>
       <div class="metric">
         <div class="m-top"><span class="m-ic ic-amber">◈</span><span class="m-label">Custo total dos erros</span></div>
         <div class="m-value">${brl(custoTotal)}</div>
-        <div class="m-foot">${brl(custoMedio)} em média por erro</div>
+        <div class="m-foot">${brl(custoMedio)} médio${deltaHTML(serieC)?' · '+deltaHTML(serieC):''}</div>
+        ${spC}
       </div>
       <div class="metric danger">
         <div class="m-top"><span class="m-ic ic-red">▲</span><span class="m-label">Saída de caixa (reembolsos)</span></div>
@@ -1601,7 +1659,7 @@ function renderCausas(main, data){
 
     <div class="card" style="margin-bottom:14px">
       <h3>Top causas · custo total e % acumulado</h3>
-      <div class="card-sub">Barras = custo total da causa (coluna "Tipo de problema" na planilha). Linha = % acumulado.</div>
+      <div class="card-sub">Barras = custo total da causa (coluna "Tipo de problema" na planilha). Linha = % acumulado. <b>Clique numa barra</b> pra ver os casos daquela causa.</div>
       <div class="chart-box" style="height:340px"><canvas id="chPareto"></canvas></div>
     </div>
 
@@ -1633,6 +1691,8 @@ function renderCausas(main, data){
       { type:'line', label:'% acumulado', data: top.map(t=>t.acc), borderColor:themeColors().line, backgroundColor:themeColors().line, borderWidth:2, tension:.3, pointRadius:3, yAxisID:'y1' },
     ]},
     options:{ maintainAspectRatio:false,
+      onClick:(evt, els)=>{ if(!els||!els.length) return; const c = top[els[0].index]; if(c && c.nome){ state.causaFiltro = c.nome; state.screen='casos'; render(); } },
+      onHover:(evt, els)=>{ const t=evt.native&&evt.native.target; if(t) t.style.cursor = els.length ? 'pointer' : 'default'; },
       plugins:{ legend:{display:true, position:'top', align:'end', labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:11.5,family:'Inter'},color:'#475059'}},
         tooltip:{ backgroundColor:'#17181B', padding:11, cornerRadius:8, callbacks:{ label:(it)=> it.dataset.type==='bar' ? '  '+brl(it.parsed.y) : '  '+it.parsed.y.toFixed(1)+'% acumulado' } } },
       scales:{ x:{grid:{display:false}, border:{display:false}, ticks:{color:themeColors().axis, font:{size:10.5,family:'Inter'}, maxRotation:38, minRotation:38}},
@@ -1814,6 +1874,7 @@ function renderCasos(main, all){
   const q = state.buscaCaso.trim().toLowerCase();
   let rows = all.slice();
   if(q) rows = rows.filter(r => String(r.idVenda).includes(q) || r.nomeCard.toLowerCase().includes(q) || (r.responsavel||'').toLowerCase().includes(q));
+  if(state.causaFiltro) rows = rows.filter(r => (r.subproblema||'Não classificado') === state.causaFiltro);   // drill-down do Pareto
   // filtro rápido (visão selecionada)
   if(state.casosView==='pendentes') rows = rows.filter(r=>!r.auditado);
   else if(state.casosView==='parados7') rows = rows.filter(r=>!r.auditado && diasDesde(r.date)>7);
@@ -1860,6 +1921,7 @@ function renderCasos(main, all){
       <div class="ck"><div class="ck-l">Idade média dos pendentes</div><div class="ck-v">${idadeMedia}<span style="font-size:13px;font-weight:600;color:#8A9099"> dias</span></div></div>
     </div>
     <div class="chips-bar">
+      ${state.causaFiltro?`<button class="chip on" id="chipCausa" title="Filtrando por causa vinda do Pareto">Causa: ${esc(state.causaFiltro)} <span class="x">✕</span></button><span class="chip-sep"></span>`:''}
       ${vChip('todos','Todos')}${vChip('pendentes','Pendentes')}${vChip('parados7','Parados +7d')}${vChip('altoCusto','Alto custo')}
       ${views.length?'<span class="chip-sep"></span>':''}
       ${views.map((v,i)=>`<button class="chip" data-savedidx="${i}" title="setor: ${esc(v.setor)||'todos'} · linha: ${esc(v.empresa)||'todas'} · ${esc(v.casosView)||'todos'}">${esc(v.nome)} <span class="x" data-delidx="${i}">✕</span></button>`).join('')}
@@ -1876,6 +1938,7 @@ function renderCasos(main, all){
 
   document.getElementById('buscaCaso').addEventListener('input', e=>{ const v=e.target.value; state.buscaCaso=v; render(); const el=document.getElementById('buscaCaso'); el.focus(); el.setSelectionRange(v.length,v.length); });
   document.querySelectorAll('.chip[data-view]').forEach(c=>c.addEventListener('click', ()=>{ state.casosView=c.dataset.view; render(); }));
+  const chipC=document.getElementById('chipCausa'); if(chipC) chipC.addEventListener('click', ()=>{ state.causaFiltro=''; render(); });
   document.querySelectorAll('.chip[data-savedidx]').forEach(c=>c.addEventListener('click', (e)=>{ if(e.target.dataset.delidx!==undefined){ e.stopPropagation(); removerVisao(Number(e.target.dataset.delidx)); return; } aplicarVisao(getViews()[Number(c.dataset.savedidx)]); }));
   const cs=document.getElementById('chipSalvar'); if(cs) cs.addEventListener('click', salvarVisaoAtual);
   document.querySelectorAll('.seg-toggle .seg').forEach(b=>b.addEventListener('click', ()=>{ state.casosLayout=b.dataset.layout; render(); }));
@@ -1930,6 +1993,54 @@ function reuniaoData(monday){
   const casosOrdenados = semanaAtual.slice().sort((a,b)=>b.custo-a.custo);
 
   return { monday, sunday:sundayOf(monday), semanaAtual, pendentesSemana, n, custoTotal, deltaN, deltaCusto, causasTop, respTop, casosOrdenados };
+}
+
+/* ================= DADOS INCOMPLETOS (backfill de setor) ================= */
+function sugerirSetor(r){
+  const t = ((r.nomeCard||'')+' '+(r.descricao||'')+' '+(r.subproblema||'')).toLowerCase();
+  if(/bordad|estamp|silk|costur|corte|refab|f[áa]bric|produ[çc]/.test(t)) return 'Fábrica';
+  if(/layout|arte|design|vetor|mockup/.test(t)) return 'Dupla (Vendedor e Designer)';
+  if(/vend|or[çc]ament|pedi|cliente pediu/.test(t)) return 'Vendas';
+  return '';
+}
+function refreshIncBadge(){ const b=document.getElementById('navBadgeInc'); if(!b) return; const n=RECORDS.filter(r=>!r.setor).length; b.textContent=n; b.style.display=n>0?'':'none'; const c=document.getElementById('incCount'); if(c) c.textContent=n; }
+async function salvarSetorBackfill(id, setor, rowEl, btn){
+  const r = RECORDS.find(x=>x.id===id); if(!r) return;
+  try{
+    if(!USING_DEMO){
+      await fetch(CONFIG.API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'setSetor', rowIndex:id, setor, usuario:getUsuario() }) });
+    }
+    r.setor = setor;
+    toast('Setor de #'+r.idVenda+' salvo: '+setor, true);
+    if(rowEl){ rowEl.style.transition='opacity .2s'; rowEl.style.opacity='0'; setTimeout(()=>{ rowEl.remove(); refreshIncBadge(); if(!RECORDS.filter(x=>!x.setor).length){ const m=document.getElementById('main'); if(m && state.screen==='incompletos') renderIncompletos(m); } }, 200); }
+  }catch(e){ if(btn){ btn.disabled=false; btn.textContent='Salvar'; } toast('Não consegui salvar o setor: '+e.message, false); }
+}
+function renderIncompletos(main){
+  if(!podeAuditar()){ main.innerHTML='<div class="card empty"><div class="e-title">Sem permissão para editar setor</div></div>'; return; }
+  const faltando = RECORDS.filter(r=>!r.setor).sort((a,b)=> (b.date?b.date.getTime():0)-(a.date?a.date.getTime():0));
+  if(!faltando.length){ main.innerHTML='<div class="card empty" style="padding:48px 20px"><div class="e-title">🎉 Tudo com setor preenchido!</div><div class="e-sub">Nenhum caso pendente de classificação de setor.</div></div>'; return; }
+  main.innerHTML = `
+    <div class="banner"><span class="b-ic">◑</span><div>
+      <div class="b-title"><span id="incCount">${faltando.length}</span> caso(s) sem setor preenchido</div>
+      <div class="b-text">O setor alimenta a Executiva, o Ranking e a Reunião de Vendas. Preencha aqui e o caso some da fila. A sugestão é só um palpite pelo texto — confira antes de salvar.</div>
+    </div></div>
+    <div class="card" style="padding:0">
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>ID</th><th>Cliente / Card</th><th>Descrição</th><th style="width:230px">Setor</th><th style="width:98px"></th></tr></thead>
+        <tbody>${faltando.map(r=>{ const sug=sugerirSetor(r); return `<tr data-id="${r.id}">
+          <td><span class="idchip">#${esc(r.idVenda)}</span></td>
+          <td style="font-weight:600">${esc(r.nomeCard)}</td>
+          <td style="max-width:340px;color:#8A9099;font-size:12.5px">${esc((r.descricao||'').slice(0,120))}${(r.descricao||'').length>120?'…':''}</td>
+          <td><select class="inc-setor">${['<option value="">— selecione —</option>'].concat(SETOR_OPCOES.map(o=>`<option value="${o}" ${o===sug?'selected':''}>${o}</option>`)).join('')}</select>${sug?`<div style="font-size:11px;color:#8A6A00;margin-top:3px">💡 sugestão: <b>${esc(sug)}</b></div>`:''}</td>
+          <td><button class="btn btn-primary inc-save" style="padding:7px 12px">Salvar</button></td>
+        </tr>`; }).join('')}</tbody>
+      </table></div>
+    </div>`;
+  main.querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id=Number(tr.dataset.id), sel=tr.querySelector('.inc-setor'), btn=tr.querySelector('.inc-save');
+    btn.addEventListener('click', ()=>{ const v=sel.value; if(!v){ sel.focus(); sel.style.borderColor='#C63A32'; return; } btn.disabled=true; btn.textContent='…'; salvarSetorBackfill(id, v, tr, btn); });
+  });
 }
 
 function renderReuniao(main){
@@ -2137,6 +2248,7 @@ function highlightRow(id){
 }
 
 /** Abrir um caso = navegar para a rota dele (a rota dispara o drawer). */
+let DRAWER_TRAP = null, DRAWER_PREVFOCUS = null;
 function openCaso(id){
   if(parseCasoHash() === id) renderDrawer(id);
   else location.hash = '#/casos/' + id;
@@ -2146,6 +2258,9 @@ function closeDrawer(fromHash){
   const root = document.getElementById('modalRoot');
   const dr = root.querySelector('.drawer'), sc = root.querySelector('.drawer-scrim');
   CASO_ATUAL = null;
+  if(DRAWER_TRAP){ DRAWER_TRAP(); DRAWER_TRAP=null; }
+  if(DRAWER_PREVFOCUS && DRAWER_PREVFOCUS.focus){ try{ DRAWER_PREVFOCUS.focus(); }catch(e){} }
+  DRAWER_PREVFOCUS = null;
   document.querySelectorAll('tr.row-active').forEach(t=>t.classList.remove('row-active'));
   if(dr) dr.classList.remove('show');
   if(sc) sc.classList.remove('show');
@@ -2171,6 +2286,57 @@ document.addEventListener('keydown', (e)=>{
   if(e.key==='ArrowDown'||e.key==='j'||e.key==='J'){ const n=document.getElementById('drwNext'); if(n&&n.dataset.target){ e.preventDefault(); openCaso(Number(n.dataset.target)); } }
   else if(e.key==='ArrowUp'||e.key==='k'||e.key==='K'){ const p=document.getElementById('drwPrev'); if(p&&p.dataset.target){ e.preventDefault(); openCaso(Number(p.dataset.target)); } }
 });
+
+/* ===== Lightbox de fotos (Esc fecha, ← → navegam) ===== */
+let LB = { urls:[], idx:0, prevFocus:null };
+function openLightbox(urls, i){
+  if(!urls || !urls.length) return;
+  LB.urls = urls; LB.idx = Math.max(0, Math.min(urls.length-1, i||0)); LB.prevFocus = document.activeElement;
+  let root = document.getElementById('lbRoot');
+  if(!root){ root = document.createElement('div'); root.id='lbRoot'; document.body.appendChild(root); }
+  lbRender();
+}
+function lbRender(){
+  const root = document.getElementById('lbRoot'); if(!root) return;
+  const multi = LB.urls.length>1;
+  root.innerHTML = `<div class="lb-scrim" id="lbScrim" role="dialog" aria-modal="true" aria-label="Visualizador de foto">
+      <button class="lb-x" id="lbClose" title="Fechar (Esc)" aria-label="Fechar">✕</button>
+      ${multi?`<button class="lb-nav lb-prev" id="lbPrev" title="Anterior (←)" aria-label="Foto anterior">‹</button>`:''}
+      <img class="lb-img" src="${LB.urls[LB.idx]}" alt="Foto ampliada ${LB.idx+1} de ${LB.urls.length}">
+      ${multi?`<button class="lb-nav lb-next" id="lbNext" title="Próxima (→)" aria-label="Próxima foto">›</button>`:''}
+      ${multi?`<div class="lb-count">${LB.idx+1} / ${LB.urls.length}</div>`:''}
+    </div>`;
+  const sc = document.getElementById('lbScrim');
+  sc.addEventListener('click', (e)=>{ if(e.target===sc) closeLightbox(); });
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  const p=document.getElementById('lbPrev'), n=document.getElementById('lbNext');
+  if(p) p.addEventListener('click', ()=>lbGoto(LB.idx-1));
+  if(n) n.addEventListener('click', ()=>lbGoto(LB.idx+1));
+}
+function lbGoto(i){ if(!LB.urls.length) return; LB.idx=(i+LB.urls.length)%LB.urls.length; lbRender(); }
+function closeLightbox(){ const root=document.getElementById('lbRoot'); if(root) root.innerHTML=''; LB.urls=[]; if(LB.prevFocus && LB.prevFocus.focus){ try{ LB.prevFocus.focus(); }catch(e){} } }
+document.addEventListener('keydown', (e)=>{
+  if(!document.getElementById('lbScrim')) return;
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeLightbox(); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); e.stopPropagation(); lbGoto(LB.idx-1); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); lbGoto(LB.idx+1); }
+}, true);
+
+/* ===== Focus trap p/ diálogos (drawer, modal) — Tab cicla dentro do container ===== */
+function trapFocus(container){
+  if(!container) return ()=>{};
+  const sel = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  const handler = (e)=>{
+    if(e.key!=='Tab') return;
+    const els = Array.from(container.querySelectorAll(sel)).filter(el=>el.offsetParent!==null);
+    if(!els.length) return;
+    const first=els[0], last=els[els.length-1];
+    if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+  };
+  container.addEventListener('keydown', handler);
+  return ()=>{ try{ container.removeEventListener('keydown', handler); }catch(e){} };
+}
 
 /** Monta o conteúdo interno do drawer (cabeçalho + corpo + rodapé). */
 function drawerInnerHTML(r){
@@ -2213,7 +2379,7 @@ function drawerInnerHTML(r){
         <div class="field"><label>Quem cadastrou o erro</label><div class="readonly-block">${esc(r.quemCadastrou)}</div></div>
       </div>
       <div class="field" style="margin-bottom:20px"><label>Descrição do erro</label><div class="readonly-block" style="font-style:italic">${esc(r.descricao) || '—'}</div></div>
-      ${(()=>{ const fs=parseFotos(r.foto); return fs.length ? `<div class="field" style="margin-bottom:20px"><label>Fotos do erro (${fs.length})</label><div style="display:flex;flex-wrap:wrap;gap:9px">${fs.map(u=>`<a href="${fotoSrc(u)}" target="_blank" title="Abrir imagem"><img class="thumb" style="width:88px;height:88px" src="${fotoSrc(u)}" alt="" loading="lazy"></a>`).join('')}</div></div>` : ''; })()}
+      ${(()=>{ const fs=parseFotos(r.foto); return fs.length ? `<div class="field" style="margin-bottom:20px"><label>Fotos do erro (${fs.length})</label><div style="display:flex;flex-wrap:wrap;gap:9px">${fs.map((u,i)=>`<img class="thumb lb-thumb" data-idx="${i}" style="width:88px;height:88px;cursor:zoom-in" src="${fotoSrc(u)}" alt="Foto do erro #${esc(r.idVenda)} — ${esc(r.nomeCard)}" title="Ampliar" loading="lazy">`).join('')}</div></div>` : ''; })()}
 
       <div class="sec-title">Auditoria ${editable ? '<span class="badge pill-amber">preencher agora</span>' : (r.auditado ? '<span class="badge pill-grey">já registrada</span>' : '<span class="badge pill-grey">somente leitura</span>')}</div>
       <form id="formAuditoria">
@@ -2269,13 +2435,22 @@ async function carregarHistorico(rowIndex){
       box.innerHTML = '<div class="hist-empty">Nenhum evento ainda. Mudanças de status, auditoria e registro passam a aparecer aqui.</div>';
       return;
     }
-    box.innerHTML = evs.map(ev=>`<div class="hist-item">
+    // Agrupa por dia (cabeçalho de dia + só a hora em cada item) — vira leitura, não wall of text.
+    const groups = []; const idxByDay = {};
+    evs.forEach(ev=>{
+      const q = String(ev.quando||'').trim();
+      const day = (q.split(/[ T]/)[0]) || 'Sem data';
+      if(idxByDay[day]===undefined){ idxByDay[day]=groups.length; groups.push({day, items:[]}); }
+      groups[idxByDay[day]].items.push(ev);
+    });
+    const horaDe = (q)=>{ const p=String(q||'').split(/[ T]/); return (p[1]||'').replace(/:\d{2}$/,''); }; // hh:mm
+    box.innerHTML = groups.map(g=>`<div class="hist-day">${esc(g.day)}</div>` + g.items.map(ev=>`<div class="hist-item">
       <div class="hist-dot"></div>
       <div class="hist-content">
         <div class="hist-line"><b>${esc(ev.acao)}</b>${ev.detalhe ? ' — ' + esc(ev.detalhe) : ''}</div>
-        <div class="hist-meta">${esc(ev.usuario) || '—'} · ${esc(ev.quando) || ''}</div>
+        <div class="hist-meta">${esc(ev.usuario) || '—'}${horaDe(ev.quando) ? ' · ' + esc(horaDe(ev.quando)) : ''}</div>
       </div>
-    </div>`).join('');
+    </div>`).join('')).join('');
   }catch(e){
     if(CASO_ATUAL===rowIndex) box.innerHTML = '<div class="hist-empty">Não consegui carregar o histórico agora.</div>';
   }
@@ -2292,12 +2467,15 @@ function renderDrawer(id){
   if(existing){
     existing.innerHTML = html; // navegação entre casos — sem re-animar a entrada
   } else {
-    root.innerHTML = `<div class="drawer-scrim" id="drawerScrim"></div><div class="drawer" id="drawer">${html}</div>`;
+    DRAWER_PREVFOCUS = document.activeElement;
+    root.innerHTML = `<div class="drawer-scrim" id="drawerScrim"></div><div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Detalhe do caso">${html}</div>`;
     const scrim = document.getElementById('drawerScrim');
     const dr = document.getElementById('drawer');
     scrim.addEventListener('click', ()=>closeDrawer(false));
     void dr.offsetWidth; // força reflow para a transição de entrada disparar (não depende de rAF)
     scrim.classList.add('show'); dr.classList.add('show');
+    DRAWER_TRAP = trapFocus(dr);
+    setTimeout(()=>{ const f=dr.querySelector('.close-btn'); if(f) try{ f.focus(); }catch(e){} }, 60);
   }
   wireDrawer(r);
   highlightRow(id);
@@ -2308,6 +2486,8 @@ function wireDrawer(r){
   const editable = !r.auditado && podeAuditar();
   const $ = (i)=>document.getElementById(i);
   carregarHistorico(r.id);
+  const _fotos = parseFotos(r.foto).map(fotoSrc);
+  document.querySelectorAll('.drawer .lb-thumb').forEach(el=> el.addEventListener('click', ()=> openLightbox(_fotos, Number(el.dataset.idx))));
   $('drwClose').addEventListener('click', ()=>closeDrawer(false));
   const fechar = $('drwFechar'); if(fechar) fechar.addEventListener('click', ()=>closeDrawer(false));
   const idCopy = $('idCopy'); if(idCopy) idCopy.addEventListener('click', ()=>{ navigator.clipboard?.writeText(String(r.idVenda)); idCopy.textContent='Copiado!'; setTimeout(()=>{ idCopy.textContent='#'+r.idVenda; },900); });
@@ -2443,7 +2623,7 @@ function openNovoCaso(){
 
   modalRoot.innerHTML = `
     <div class="overlay" id="overlayNovo">
-      <div class="modal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Registrar novo erro">
         <div class="modal-head">
           <div style="flex:1;min-width:0">
             <div style="font-size:19px;font-weight:800;letter-spacing:-.2px">Registrar novo erro</div>
@@ -2508,10 +2688,15 @@ function openNovoCaso(){
     </div>
   `;
 
-  const close = ()=>{ modalRoot.innerHTML=''; };
+  const _prevFocus = document.activeElement;
+  const _untrap = trapFocus(modalRoot.querySelector('.modal'));
+  const _onKey = (e)=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = ()=>{ if(_untrap) _untrap(); document.removeEventListener('keydown', _onKey, true); modalRoot.innerHTML=''; if(_prevFocus && _prevFocus.focus){ try{ _prevFocus.focus(); }catch(e){} } };
+  document.addEventListener('keydown', _onKey, true);
   document.getElementById('closeModalNovo').addEventListener('click', close);
   document.getElementById('btnCancelarNovo').addEventListener('click', close);
   document.getElementById('overlayNovo').addEventListener('click', (e)=>{ if(e.target.id==='overlayNovo') close(); });
+  setTimeout(()=>{ const f=document.getElementById('nIdVenda'); if(f) try{ f.focus(); }catch(e){} }, 60);
 
   const selResNovo = document.getElementById('selResolucaoNovo');
   selResNovo.addEventListener('change', ()=>{ document.getElementById('logicaBoxNovo').textContent = selResNovo.value ? getRes(selResNovo.value).logica : 'Selecione o tipo de resolução para ver a lógica de custo.'; });

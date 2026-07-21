@@ -369,7 +369,7 @@ function doGet(e) {
         linkPedido:    extractUrl_(descricao),
       });
     }
-    return jsonOut_({ ok: true, version: 'lote1-2026-07', aba: sh.getName(), rows: rows });
+    return jsonOut_({ ok: true, version: 'lote2-2026-07', aba: sh.getName(), rows: rows });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err && err.message || err) });
   }
@@ -385,6 +385,7 @@ function doPost(e) {
     if (action === 'criar') return criarCaso_(body.fields || {}, body.usuario);
     if (action === 'audit') return auditarCaso_(body.rowIndex, body.fields || {}, body.usuario);
     if (action === 'setStatus') return setStatus_(body.rowIndex, body.status, body.usuario);
+    if (action === 'setSetor')  return setSetor_(body.rowIndex, body.setor, body.usuario);
 
     return jsonOut_({ ok: false, error: 'Ação desconhecida: ' + action });
   } catch (err) {
@@ -484,6 +485,23 @@ function setStatus_(rowIndex, status, usuario) {
   if (status === 'resolvido') setCell_(sh, rowIndex, col, 'auditoria', 'TRUE');
   logHist_(rowIndex, idVenda, usuario, 'Status alterado', '→ ' + status);
   return jsonOut_({ ok: true, rowIndex: rowIndex, status: status });
+}
+
+/** Backfill do setor: grava SÓ o setor de uma linha (não mexe em auditoria/status).
+ *  Usado pela tela "Dados incompletos" p/ preencher os casos legados sem setor. */
+function setSetor_(rowIndex, setor, usuario) {
+  if (!rowIndex || !setor) return jsonOut_({ ok: false, error: 'rowIndex/setor ausente' });
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(8000); } catch (e) { return jsonOut_({ ok: false, error: 'ocupado, tente de novo' }); }
+  try {
+    var sh = getSheet_();
+    var col = buildColMap_(sh.getDataRange().getValues()[0]);
+    if (col.setor == null) return jsonOut_({ ok: false, error: 'Coluna de setor não encontrada na planilha.' });
+    var idVenda = (col.idVenda != null) ? sh.getRange(rowIndex, col.idVenda + 1).getValue() : '';
+    setCell_(sh, rowIndex, col, 'setor', setor);
+    logHist_(rowIndex, idVenda, usuario, 'Setor preenchido', '→ ' + setor);
+    return jsonOut_({ ok: true, rowIndex: rowIndex, setor: setor });
+  } finally { lock.releaseLock(); }
 }
 
 /**
