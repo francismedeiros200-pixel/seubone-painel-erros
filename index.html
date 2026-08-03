@@ -627,6 +627,39 @@
   .lb-nav:hover{ background:rgba(255,255,255,.2) }
   .lb-prev{ left:22px } .lb-next{ right:22px }
   .lb-count{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#e7ecf3; font-size:13px; font-variant-numeric:tabular-nums; background:rgba(0,0,0,.4); padding:5px 12px; border-radius:999px }
+  /* ================================================================
+     REDESIGN — refino visual portado da "Proposta de Redesign"
+     (referência estática). Só estética; nenhuma mudança de dados,
+     fiação ou estrutura. Camada no fim do <style>: vence por ordem.
+     ================================================================ */
+  /* (1) Badge de status ganha um ponto colorido (herda a cor do status
+        via currentColor). .badge já é inline-flex com gap:6px, então o
+        ponto se encaixa sem tocar no espaçamento existente. */
+  .stbadge::before{ content:""; width:6px; height:6px; border-radius:50%;
+    background:currentColor; flex:0 0 auto }
+
+  /* (2) Elevação suave nos cards do TEMA CLARO (hoje totalmente chapado,
+        só borda). Sombra em camadas equivalente ao --shadow do mock; o
+        tema escuro já tem sua própria sombra (--shadow-1). */
+  html:not([data-theme="dark"]) .card,
+  html:not([data-theme="dark"]) .stat,
+  html:not([data-theme="dark"]) .metric,
+  html:not([data-theme="dark"]) .kpi-accent,
+  html:not([data-theme="dark"]) .kpi-red,
+  html:not([data-theme="dark"]) .ck{
+    box-shadow:0 1px 2px rgba(15,21,32,.04), 0 6px 18px rgba(15,21,32,.06);
+    border-color:#EDEEF1;
+  }
+  html:not([data-theme="dark"]) .kpi-dark,
+  html:not([data-theme="dark"]) .metric.hero{
+    box-shadow:0 2px 4px rgba(15,21,32,.10), 0 10px 28px rgba(15,21,32,.16);
+  }
+
+  /* (3) Header fixo com blur do conteúdo por trás (translúcido), nos
+        dois temas — dá o mesmo efeito "premium" da topbar do mock. */
+  header{ backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px) }
+  html:not([data-theme="dark"]) header{ background:rgba(255,255,255,.82) }
+  html[data-theme="dark"] header{ background:color-mix(in oklab, var(--surface-1) 82%, transparent) }
 </style>
 </head>
 <body>
