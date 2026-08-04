@@ -134,7 +134,13 @@ function getFotosFolder_() {
 
 function salvarFotos_(fotos, idVenda) {
   if (!fotos || !fotos.length) return '';
-  var folder = getFotosFolder_();
+  var folder;
+  try {
+    folder = getFotosFolder_();
+  } catch (e) {
+    // Erro típico: o deploy não tem o escopo do Drive autorizado. Mensagem clara p/ o Histórico.
+    throw new Error('Sem acesso ao Google Drive — autorize o escopo do Drive (rode getFotosFolder_ no editor) e republique a implantação. Detalhe: ' + (e && e.message || e));
+  }
   var urls = [];
   for (var i = 0; i < fotos.length; i++) {
     try {
@@ -152,6 +158,31 @@ function salvarFotos_(fotos, idVenda) {
     } catch (e) {}
   }
   return urls.join(',');
+}
+
+/**
+ * Rode ESTA função no editor (botão ▶) para ATIVAR e TESTAR o pipeline de fotos:
+ *   1) na 1ª vez o Apps Script vai pedir autorização do escopo do Google Drive — ACEITE;
+ *   2) confirma que a coluna "Foto" existe na planilha;
+ *   3) cria e apaga um arquivo de teste na pasta de fotos.
+ * Se tudo passar, é só republicar a implantação (Nova versão) para as fotos subirem ao vivo.
+ */
+function testarPipelineFotos() {
+  var sh = getSheet_();
+  var header = sh.getDataRange().getValues()[0];
+  var col = buildColMap_(header);
+  if (col.foto == null) {
+    Logger.log('❌ A planilha NÃO tem a coluna "Foto". Adicione um cabeçalho "Foto" e rode de novo.');
+    return;
+  }
+  Logger.log('✔ Coluna "Foto" encontrada na posição ' + (col.foto + 1) + '.');
+  var folder = getFotosFolder_(); // dispara o pedido de autorização do Drive na 1ª vez
+  Logger.log('✔ Pasta de fotos acessível: "' + folder.getName() + '" (' + folder.getId() + ').');
+  var blob = Utilities.newBlob('teste', 'text/plain', 'teste_pipeline_fotos.txt');
+  var file = folder.createFile(blob);
+  Logger.log('✔ Criei um arquivo de teste; apagando…');
+  file.setTrashed(true);
+  Logger.log('✅ Pipeline de fotos OK. Agora republique a implantação (Nova versão) e as fotos vão subir.');
 }
 
 function jsonOut_(obj) {
@@ -369,7 +400,7 @@ function doGet(e) {
         linkPedido:    extractUrl_(descricao),
       });
     }
-    return jsonOut_({ ok: true, version: 'lote2-2026-07', aba: sh.getName(), rows: rows });
+    return jsonOut_({ ok: true, version: 'fotos-fix-2026-08', aba: sh.getName(), rows: rows });
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err && err.message || err) });
   }
@@ -428,9 +459,22 @@ function criarCaso_(f, usuario) {
   setCell_(sh, novaLinha, col, 'queFim',        f.queFim);
   setCell_(sh, novaLinha, col, 'tipoResolucao', f.tipoResolucao);
 
-  if (f.fotos && f.fotos.length && col.foto != null) {
-    var links = salvarFotos_(f.fotos, f.idVenda);
-    if (links) setCell_(sh, novaLinha, col, 'foto', links);
+  if (f.fotos && f.fotos.length) {
+    if (col.foto == null) {
+      // Sem coluna "Foto" na planilha não há onde gravar os links.
+      logHist_(novaLinha, f.idVenda, usuario || f.quemCadastrou, 'Fotos não salvas',
+        'A planilha não tem a coluna "Foto". Adicione um cabeçalho "Foto".');
+    } else {
+      // Falha nas fotos (ex.: escopo do Drive não autorizado no deploy) NÃO pode derrubar
+      // o registro — os campos já foram gravados acima. Registramos o motivo no Histórico.
+      try {
+        var links = salvarFotos_(f.fotos, f.idVenda);
+        if (links) setCell_(sh, novaLinha, col, 'foto', links);
+        else logHist_(novaLinha, f.idVenda, usuario || f.quemCadastrou, 'Fotos não salvas', 'Nenhum link gerado (formato inesperado).');
+      } catch (e) {
+        logHist_(novaLinha, f.idVenda, usuario || f.quemCadastrou, 'Falha ao salvar fotos', String(e && e.message || e));
+      }
+    }
   }
 
   logHist_(novaLinha, f.idVenda, usuario || f.quemCadastrou, 'Caso registrado',

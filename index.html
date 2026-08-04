@@ -2866,9 +2866,12 @@ function openNovoCaso(){
       return;
     }
 
-    // Considera o caso já auditado quando a classificação mínima foi preenchida.
+    // Todo registro novo entra como "Novo" (pendente de auditoria) — nunca já auditado.
+    // A classificação preenchida aqui (setor/resolução) é só um rascunho; quem audita
+    // confirma depois. Antes, preencher setor+resolução marcava o caso como resolvido e
+    // ele pulava a auditoria e sumia das filas de pendentes dos colaboradores.
     const setor = g('setor'), tipoResolucao = g('tipoResolucao');
-    const auditado = !!(setor && tipoResolucao);
+    const auditado = false;
 
     const fields = {
       idVenda, nomeCard, descricao, quemCadastrou, linkPedido: g('linkPedido'),
@@ -2876,6 +2879,7 @@ function openNovoCaso(){
       tipoProblema: g('tipoProblema'), subproblema: g('subproblema'),
       qtd: qtdNum, tipoResolucao,
       auditoria: auditado,
+      status: 'novo',   // registro nasce como "Novo" e passa pela auditoria
       fotos: FOTOS.slice(),   // data URLs comprimidas; o Codigo.gs salva no Drive e grava o link
     };
 
@@ -2891,12 +2895,12 @@ function openNovoCaso(){
       RECORDS.push({ id:tempId, idVenda, nomeCard, date:new Date(), quemCadastrou, descricao, linkPedido:fields.linkPedido,
         auditado, setor:setor||null, culpaDe:null, responsavel:fields.responsavel||null, empresa:null,
         tipoProduto:null, subproblema:fields.tipoProblema||null, detalhe:fields.subproblema||null,
-        qtd:fields.qtd===''?null:fields.qtd, custo:null,
+        qtd:fields.qtd===''?null:fields.qtd, custo:null, status:'novo',
         tipoResolucao:tipoResolucao||null, queFim:null, foto:FOTOS.join('\n') });
       derivarListasDinamicas(); initFilterOptions();
-      state.screen = 'casos';
+      state.screen = 'casos'; state.casosView = 'pendentes';   // leva o usuário direto pra fila de pendentes onde o novo caso aparece
       close(); render();
-      toast(auditado ? 'Erro registrado e auditado' : 'Erro registrado como pendente', true);
+      toast('Erro registrado como Novo — vai para a auditoria', true);
       // Verificação real: relê a planilha e confirma que o caso apareceu.
       if(!USING_DEMO) setTimeout(()=>verificarGravacao(()=>RECORDS.some(r=>String(r.idVenda)===idVenda && r.id>0), 'registro do caso #'+idVenda), 1800);
     } catch(err){
