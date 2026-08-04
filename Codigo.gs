@@ -185,6 +185,45 @@ function testarPipelineFotos() {
   Logger.log('✅ Pipeline de fotos OK. Agora republique a implantação (Nova versão) e as fotos vão subir.');
 }
 
+/**
+ * Diagnóstico do "salto de linha": mostra até onde vão os dados reais e o que
+ * está ocupando as linhas abaixo (geralmente fórmulas em colunas auxiliares).
+ * Rode no editor (▶) e veja o resultado em Execuções / Logs.
+ */
+function diagnosticarLinhas() {
+  var sh = getSheet_();
+  var header = sh.getDataRange().getValues()[0];
+  var col = buildColMap_(header);
+  var lastRow = sh.getLastRow();
+  var maxRows = sh.getMaxRows();
+  var ultDados = ultimaLinhaDeDados_(sh, col);
+  Logger.log('Aba: ' + sh.getName());
+  Logger.log('getLastRow (qualquer conteúdo): ' + lastRow);
+  Logger.log('getMaxRows (grade total): ' + maxRows);
+  Logger.log('Última linha com ID/nome (dados reais): ' + ultDados);
+  Logger.log('→ Novos registros passarão a ir para a linha ' + (ultDados + 1) + ' (antes iam para ' + (lastRow + 1) + ').');
+  if (lastRow > ultDados) {
+    // Descobre QUAIS colunas têm conteúdo na faixa "fantasma" (logo após os dados).
+    var faixaIni = ultDados + 1;
+    var nLin = lastRow - ultDados;
+    var vals = sh.getRange(faixaIni, 1, nLin, header.length).getValues();
+    var colsComConteudo = [];
+    for (var c = 0; c < header.length; c++) {
+      var tem = false;
+      for (var r = 0; r < vals.length && !tem; r++) {
+        if (String(vals[r][c] == null ? '' : vals[r][c]).trim() !== '') tem = true;
+      }
+      if (tem) colsComConteudo.push('col ' + (c + 1) + ' ("' + header[c] + '")');
+    }
+    Logger.log('Linhas ' + faixaIni + '–' + lastRow + ' têm conteúdo nestas colunas: ' +
+      (colsComConteudo.length ? colsComConteudo.join(', ') : '(nenhuma — pode ser formatação/grade)'));
+    Logger.log('Para compactar: selecione as linhas ' + faixaIni + ' até ' + lastRow +
+      ' e use "Excluir linhas" (limpe também as fórmulas dessas colunas auxiliares se não forem necessárias).');
+  } else {
+    Logger.log('Sem faixa fantasma — os dados vão até o fim. Nada a compactar.');
+  }
+}
+
 function jsonOut_(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
@@ -431,12 +470,35 @@ function setCell_(sh, rowIndex1, col, key, value) {
   sh.getRange(rowIndex1, i + 1).setValue(value);
 }
 
+/**
+ * Última linha que REALMENTE tem um registro (ID da venda ou Nome do card preenchido).
+ * getLastRow() conta qualquer conteúdo em qualquer coluna — inclusive fórmulas
+ * arrastadas nas colunas auxiliares da direita — e por isso empurrava os novos
+ * registros para lá embaixo (ex.: linha 3559 em vez de 347). Aqui olhamos só as
+ * colunas de ID e nome, então o append continua logo após os dados reais.
+ */
+function ultimaLinhaDeDados_(sh, col) {
+  var ultima = sh.getLastRow();
+  if (ultima < 2) return 1; // só cabeçalho (ou vazia)
+  var idCol   = (col.idVenda != null)  ? col.idVenda  : null;
+  var nomeCol = (col.nomeCard != null) ? col.nomeCard : null;
+  if (idCol == null && nomeCol == null) return ultima; // sem como saber; usa o padrão
+  var ids   = idCol   != null ? sh.getRange(1, idCol + 1,   ultima, 1).getValues()   : null;
+  var nomes = nomeCol != null ? sh.getRange(1, nomeCol + 1, ultima, 1).getValues() : null;
+  for (var r = ultima - 1; r >= 1; r--) { // r=0 é o cabeçalho
+    var temId   = ids   && String(ids[r][0]   == null ? '' : ids[r][0]).trim()   !== '';
+    var temNome = nomes && String(nomes[r][0] == null ? '' : nomes[r][0]).trim() !== '';
+    if (temId || temNome) return r + 1; // 1-based
+  }
+  return 1;
+}
+
 function criarCaso_(f, usuario) {
   var sh = getSheet_();
   var header = sh.getDataRange().getValues()[0];
   var col = buildColMap_(header);
 
-  var novaLinha = sh.getLastRow() + 1;
+  var novaLinha = ultimaLinhaDeDados_(sh, col) + 1;
 
   var hoje = new Date();
   setCell_(sh, novaLinha, col, 'data', fmtDate_(hoje));
