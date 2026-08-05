@@ -698,6 +698,7 @@
       <div class="nav-item" data-screen="incompletos"><span class="ic">◑</span><span>Dados incompletos</span><span class="ic-badge" id="navBadgeInc" style="background:#E0A400">0</span></div>
       <div class="nav-label">Apresentação</div>
       <div class="nav-item" data-screen="reuniao"><span class="ic">◧</span><span>Reunião de Vendas</span></div>
+      <div class="nav-item" data-screen="reuniaoFab"><span class="ic">◨</span><span>Reunião de Fábrica</span></div>
     </nav>
     <div class="sidebar-foot" id="sideUser">
       <span class="avatar" id="sideAvatar">?</span>
@@ -766,6 +767,25 @@ const SETORES_VENDAS = ['Vendas','Dupla (Vendedor e Designer)'];
 // Opções do campo único "Setor do problema" (absorve o antigo "Culpa de", por isso inclui "Cliente").
 const SETOR_OPCOES = ['Vendas','Fábrica','Dupla (Vendedor e Designer)','Escritório','Cliente'];
 
+// Configuração das reuniões semanais com apresentação (PDF). Cada uma filtra por setor e
+// tem sua própria semana selecionada. A tela e o relatório são os mesmos, só os rótulos mudam.
+const REUNIOES = {
+  vendas: {
+    screen:'reuniao', stateKey:'semanaReuniao', setores:SETORES_VENDAS,
+    nome:'Reunião de Vendas', short:'Vendas',
+    respLabel:'Por vendedor / responsável',
+    respSub:'Quem concentra o custo da semana. Use como mapa, não como julgamento isolado.',
+    foco:'Cada caso é uma chance de ajustar o processo. Obrigado, time! 🧢',
+  },
+  fabrica: {
+    screen:'reuniaoFab', stateKey:'semanaReuniaoFab', setores:['Fábrica'],
+    nome:'Reunião de Fábrica', short:'Fábrica',
+    respLabel:'Por responsável na fábrica',
+    respSub:'Quem concentra o custo da semana na produção. Use como mapa pra melhorar o processo.',
+    foco:'Cada erro aqui é uma melhoria possível no processo de fabricação. Obrigado, produção! 🧢',
+  },
+};
+
 /** Escapa texto para inserir com segurança em HTML (evita XSS via campos do usuário). */
 function esc(v){
   return String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -786,9 +806,9 @@ const DEMO_USUARIOS = [
 
 // Matriz de permissões por papel.
 const PAPEIS = {
-  gestor:      { label:'Gestor',      screens:['exec','causas','resp','casos','incompletos','reuniao'], registrar:true, auditar:true },
-  dev:         { label:'Dev',         screens:['exec','causas','resp','casos','incompletos','reuniao'], registrar:true, auditar:true },
-  auditor:     { label:'Auditor',     screens:['exec','causas','resp','casos','incompletos','reuniao'], registrar:true, auditar:true },
+  gestor:      { label:'Gestor',      screens:['exec','causas','resp','casos','incompletos','reuniao','reuniaoFab'], registrar:true, auditar:true },
+  dev:         { label:'Dev',         screens:['exec','causas','resp','casos','incompletos','reuniao','reuniaoFab'], registrar:true, auditar:true },
+  auditor:     { label:'Auditor',     screens:['exec','causas','resp','casos','incompletos','reuniao','reuniaoFab'], registrar:true, auditar:true },
   colaborador: { label:'Colaborador', screens:['causas','casos'],                                       registrar:true, auditar:false },
 };
 function papelDef(){ return PAPEIS[SESSION && SESSION.papel] || PAPEIS.colaborador; }
@@ -1171,7 +1191,7 @@ async function refreshData(silent){
 }
 
 /* ================= ESTADO / FILTROS ================= */
-const state = { screen:'exec', periodoTipo:'relativo', periodo:'Últimos 12 meses', mes:'', semana:'', setor:'', empresa:'', granularidade:'Mensal', buscaCaso:'', semanaReuniao:null };
+const state = { screen:'exec', periodoTipo:'relativo', periodo:'Últimos 12 meses', mes:'', semana:'', setor:'', empresa:'', granularidade:'Mensal', buscaCaso:'', semanaReuniao:null, semanaReuniaoFab:null };
 let charts = {};
 
 /* ---------- "Última atualização" (carimbo do último carregamento da planilha) ---------- */
@@ -1342,10 +1362,15 @@ function initFilterOptions(){
   }).join('');
   if(!state.semana && semanasKeys.length) state.semana = String(semanasKeys[0]);
 
-  // semana padrão pra Reunião Semanal: a mais recente com erro do Escritório auditado
+  // semana padrão pra Reunião de Vendas: a mais recente com erro de Vendas/Dupla auditado
   if(state.semanaReuniao === null){
-    const semanasEscritorio = RECORDS.filter(r=>r.auditado && r.setor==='Escritório').map(r=>mondayOf(r.date).getTime());
-    state.semanaReuniao = semanasEscritorio.length ? Math.max(...semanasEscritorio) : (semanasKeys[0] || mondayOf(new Date()).getTime());
+    const semanasVendas = RECORDS.filter(r=>r.auditado && SETORES_VENDAS.includes(r.setor)).map(r=>mondayOf(r.date).getTime());
+    state.semanaReuniao = semanasVendas.length ? Math.max(...semanasVendas) : (semanasKeys[0] || mondayOf(new Date()).getTime());
+  }
+  // semana padrão pra Reunião de Fábrica: a mais recente com erro de Fábrica auditado
+  if(state.semanaReuniaoFab === null){
+    const semanasFab = RECORDS.filter(r=>r.auditado && r.setor==='Fábrica').map(r=>mondayOf(r.date).getTime());
+    state.semanaReuniaoFab = semanasFab.length ? Math.max(...semanasFab) : (semanasKeys[0] || mondayOf(new Date()).getTime());
   }
 
   document.getElementById('srcBadge').textContent = USING_DEMO ? 'Modo demonstração' : 'Dados reais';
@@ -1491,10 +1516,11 @@ function render(){
     casos: ['Casos / Auditoria', 'Fila de casos pendentes e já auditados · ' + rotuloPeriodo()],
     incompletos: ['Dados incompletos', 'Casos sem setor preenchido — atribua para destravar as análises'],
     reuniao: ['Reunião de Vendas', 'Erros da semana para apresentar ao time — Vendas e Dupla · navegação de semana própria'],
+    reuniaoFab: ['Reunião de Fábrica', 'Erros da semana para apresentar à produção — setor Fábrica · navegação de semana própria'],
   };
   document.getElementById('pageTitle').textContent = TITLES[state.screen][0];
   document.getElementById('pageSub').textContent = TITLES[state.screen][1];
-  document.querySelector('.filters').style.display = (state.screen==='reuniao'||state.screen==='incompletos') ? 'none' : '';
+  document.querySelector('.filters').style.display = (state.screen==='reuniao'||state.screen==='reuniaoFab'||state.screen==='incompletos') ? 'none' : '';
   // Faixa visível de modo demonstração — evita que dados de exemplo sejam confundidos com reais.
   document.getElementById('demoBanner').innerHTML = USING_DEMO
     ? `<div class="demo-strip">⚠️ <b>Modo demonstração</b> — os números abaixo são dados de exemplo, não a planilha real. ${CONFIG.API_URL ? 'Não consegui ler a planilha; tente <b>⟳ Atualizar</b>.' : ''}</div>`
@@ -1503,7 +1529,8 @@ function render(){
   const main = document.getElementById('main');
   main.innerHTML = '';
 
-  if(state.screen === 'reuniao'){ renderReuniao(main); return; }
+  if(state.screen === 'reuniao'){ renderReuniao(main, REUNIOES.vendas); return; }
+  if(state.screen === 'reuniaoFab'){ renderReuniao(main, REUNIOES.fabrica); return; }
   if(state.screen === 'incompletos'){ renderIncompletos(main); return; }
 
   const all = filtered();
@@ -2078,10 +2105,11 @@ function renderCasos(main, all){
 /* ================= REUNIÃO SEMANAL · ESCRITÓRIO ================= */
 /** Agrega os dados da Reunião de Vendas de uma semana (Vendas + Dupla).
  *  Usado tanto pela tela quanto pelo modo apresentação. */
-function reuniaoData(monday){
-  const daSemana = (mon) => RECORDS.filter(r => SETORES_VENDAS.includes(r.setor) && mondayOf(r.date).getTime() === mon);
+function reuniaoData(monday, setores){
+  setores = setores || SETORES_VENDAS;
+  const daSemana = (mon) => RECORDS.filter(r => setores.includes(r.setor) && mondayOf(r.date).getTime() === mon);
   const semanaAtual = daSemana(monday).filter(r=>r.auditado);
-  const pendentesSemana = RECORDS.filter(r => !r.auditado && SETORES_VENDAS.includes(r.setor) && mondayOf(r.date).getTime() === monday).length;
+  const pendentesSemana = RECORDS.filter(r => !r.auditado && setores.includes(r.setor) && mondayOf(r.date).getTime() === monday).length;
   const semanaAnterior = daSemana(monday - 7*86400000).filter(r=>r.auditado);
 
   const n = semanaAtual.length;
@@ -2152,8 +2180,9 @@ function renderIncompletos(main){
   });
 }
 
-function renderReuniao(main){
-  const d = reuniaoData(state.semanaReuniao);
+function renderReuniao(main, cfg){
+  cfg = cfg || REUNIOES.vendas;
+  const d = reuniaoData(state[cfg.stateKey], cfg.setores);
   const { monday, sunday, n, custoTotal, deltaN, deltaCusto, causasTop, respTop, casosOrdenados, pendentesSemana } = d;
 
   const nav = `
@@ -2171,13 +2200,13 @@ function renderReuniao(main){
   `;
 
   const bindNav = ()=>{
-    document.getElementById('semanaPrev').addEventListener('click', ()=>{ state.semanaReuniao -= 7*86400000; render(); });
-    document.getElementById('semanaNext').addEventListener('click', ()=>{ state.semanaReuniao += 7*86400000; render(); });
-    const bap = document.getElementById('btnPdf'); if(bap && n>0) bap.addEventListener('click', ()=> exportarPDF(state.semanaReuniao));
+    document.getElementById('semanaPrev').addEventListener('click', ()=>{ state[cfg.stateKey] -= 7*86400000; render(); });
+    document.getElementById('semanaNext').addEventListener('click', ()=>{ state[cfg.stateKey] += 7*86400000; render(); });
+    const bap = document.getElementById('btnPdf'); if(bap && n>0) bap.addEventListener('click', ()=> exportarPDF(state[cfg.stateKey], cfg));
   };
 
   if(n === 0){
-    main.innerHTML = nav + `<div class="card empty"><div class="e-title">Nenhum erro de Vendas auditado nesta semana</div><div class="e-sub">${pendentesSemana>0 ? pendentesSemana+' caso(s) ainda pendente(s) de auditoria nesta semana.' : 'Use as setas pra navegar até uma semana com dado, ou é uma boa notícia mesmo.'}</div></div>`;
+    main.innerHTML = nav + `<div class="card empty"><div class="e-title">Nenhum erro de ${esc(cfg.short)} auditado nesta semana</div><div class="e-sub">${pendentesSemana>0 ? pendentesSemana+' caso(s) ainda pendente(s) de auditoria nesta semana.' : 'Use as setas pra navegar até uma semana com dado, ou é uma boa notícia mesmo.'}</div></div>`;
     bindNav();
     return;
   }
@@ -2188,10 +2217,10 @@ function renderReuniao(main){
   const maxCustoResp = respTop.length ? respTop[0].custo : 0;
 
   main.innerHTML = nav + `
-    ${pendentesSemana>0 ? `<div class="banner red"><span class="b-ic">!</span><div><div class="b-title">${pendentesSemana} caso(s) de Vendas ainda pendente(s) de auditoria nesta semana</div><div class="b-text">Não entram nos números abaixo. Vale fechar antes da reunião.</div></div></div>` : ''}
+    ${pendentesSemana>0 ? `<div class="banner red"><span class="b-ic">!</span><div><div class="b-title">${pendentesSemana} caso(s) de ${esc(cfg.short)} ainda pendente(s) de auditoria nesta semana</div><div class="b-text">Não entram nos números abaixo. Vale fechar antes da reunião.</div></div></div>` : ''}
 
     <div class="metrics">
-      <div class="metric hero"><div class="m-top"><span class="m-ic">▦</span><span class="m-label">Erros de Vendas na semana</span></div><div class="m-value">${n}</div><div class="m-foot">${arrow(deltaN)}</div></div>
+      <div class="metric hero"><div class="m-top"><span class="m-ic">▦</span><span class="m-label">Erros de ${esc(cfg.short)} na semana</span></div><div class="m-value">${n}</div><div class="m-foot">${arrow(deltaN)}</div></div>
       <div class="metric"><div class="m-top"><span class="m-ic ic-amber">◈</span><span class="m-label">Custo total da semana</span></div><div class="m-value">${brl(custoTotal)}</div><div class="m-foot">${arrow(deltaCusto)}</div></div>
       <div class="metric"><div class="m-top"><span class="m-ic ic-green">◆</span><span class="m-label">Causa em destaque</span></div><div class="m-value sm">${causaDestaque.nome}</div><div class="m-foot">${causaDestaque.n} caso(s) · ${brl(causaDestaque.custo)}</div></div>
       <div class="metric"><div class="m-top"><span class="m-ic ic-blue">◉</span><span class="m-label">Casos com foto</span></div><div class="m-value">${comFoto}<span style="font-size:16px;color:#8A9099;font-weight:600"> / ${n}</span></div><div class="m-foot">aparecem com imagem no PDF</div></div>
@@ -2206,8 +2235,8 @@ function renderReuniao(main){
         </div>
       </div>
       <div class="card">
-        <h3>Por vendedor / responsável</h3>
-        <div class="card-sub">Quem concentra o custo da semana. Use como mapa, não como julgamento isolado.</div>
+        <h3>${esc(cfg.respLabel)}</h3>
+        <div class="card-sub">${esc(cfg.respSub)}</div>
         <div style="margin-top:10px">
           ${respTop.slice(0,6).map((c,i)=>`<div class="legend-row"><span class="rank ${i===0?'top':''}">${i+1}</span><span style="margin-left:10px;flex:1">${esc(c.nome)}</span><div class="mbar" style="max-width:150px;margin:0 10px"><div class="track"><div class="fill" style="width:${maxCustoResp?Math.max(3,c.custo/maxCustoResp*100):0}%;background:#2A6FDB"></div></div></div><b style="min-width:78px;text-align:right">${brl(c.custo)}</b></div>`).join('')}
         </div>
@@ -2215,7 +2244,7 @@ function renderReuniao(main){
     </div>
 
     <div class="card">
-      <h3>Casos da semana — Vendas</h3>
+      <h3>Casos da semana — ${esc(cfg.short)}</h3>
       <div class="card-sub">Ordenado por custo. Clique numa linha pra ver o caso completo. A miniatura mostra se o caso tem foto.</div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>Foto</th><th>ID</th><th>Responsável</th><th>Cliente / Card</th><th>Causa</th><th class="num">Custo</th><th>Tipo de resolução</th></tr></thead>
@@ -2251,7 +2280,8 @@ function prArrow(delta){
   return '<span style="color:#8A9099">igual à semana anterior</span>';
 }
 
-function buildPrintReport(d){
+function buildPrintReport(d, cfg){
+  cfg = cfg || REUNIOES.vendas;
   const periodo = `${fmtDM(new Date(d.monday))} a ${fmtDM(d.sunday)}`;
   const comFoto = d.casosOrdenados.filter(r=>parseFotos(r.foto).length).length;
   const causa = d.causasTop[0] || {nome:'—', n:0, custo:0};
@@ -2274,7 +2304,7 @@ function buildPrintReport(d){
 
   const ranking = `
     <div>
-      <div class="pr-sec">Por vendedor / responsável</div>
+      <div class="pr-sec">${esc(cfg.respLabel)}</div>
       <div class="pr-secsub">Quem concentra o custo da semana. Mapa, não julgamento isolado.</div>
       ${d.respTop.slice(0,7).map((c,i)=>`<div class="pr-row"><span class="pr-rk ${i===0?'top':''}">${i+1}</span><span class="pr-name">${esc(c.nome)}</span><span class="pr-bar"><i style="width:${Math.max(4,c.custo/maxResp*100)}%;background:${i===0?'#E0A400':'#2A6FDB'}"></i></span><span class="pr-val">${brl(c.custo)}</span></div>`).join('')}
     </div>`;
@@ -2307,24 +2337,25 @@ function buildPrintReport(d){
     <div class="pr-page">
       <div class="pr-brand">
         <span class="pr-badge">E</span>
-        <span class="pr-bname">SeuBoné <span>· Reunião de Vendas</span></span>
+        <span class="pr-bname">SeuBoné <span>· ${esc(cfg.nome)}</span></span>
         <span class="pr-period">${periodo}</span>
       </div>
       <h1 class="pr-title">Erros da Semana</h1>
       <div class="pr-sub">${d.n} caso(s) auditado(s) · ${brl(d.custoTotal)} em custo · foco em aprendizado, não em culpa.${d.pendentesSemana>0?` <b style="color:#A62A23">${d.pendentesSemana} caso(s) ainda pendente(s) — fora destes números.</b>`:''}</div>
       ${kpis}
       <div class="pr-two">${causas}${ranking}</div>
-      <div class="pr-cases-h">Casos da semana — Vendas (${d.casosOrdenados.length})</div>
+      <div class="pr-cases-h">Casos da semana — ${esc(cfg.short)} (${d.casosOrdenados.length})</div>
       ${cases}
-      <div class="pr-foot"><b>${d.n} erro(s) · ${brl(d.custoTotal)}</b> na semana ${periodo}.<br>Cada caso é uma chance de ajustar o processo. Obrigado, time! 🧢</div>
+      <div class="pr-foot"><b>${d.n} erro(s) · ${brl(d.custoTotal)}</b> na semana ${periodo}.<br>${esc(cfg.foco)}</div>
     </div>`;
 }
 
-function exportarPDF(monday){
-  const d = reuniaoData(monday);
-  if(d.n === 0){ toast('Sem casos de Vendas auditados nesta semana para exportar.', false); return; }
+function exportarPDF(monday, cfg){
+  cfg = cfg || REUNIOES.vendas;
+  const d = reuniaoData(monday, cfg.setores);
+  if(d.n === 0){ toast('Sem casos de '+cfg.short+' auditados nesta semana para exportar.', false); return; }
   const root = document.getElementById('printRoot');
-  root.innerHTML = buildPrintReport(d);
+  root.innerHTML = buildPrintReport(d, cfg);
   const btn = document.getElementById('btnPdf');
   const imgs = Array.from(root.querySelectorAll('img'));
   let pending = imgs.filter(im=>!im.complete).length;
